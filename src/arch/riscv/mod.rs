@@ -1,0 +1,1 @@
+#![allow(clippy::unnecessary_wraps)]
