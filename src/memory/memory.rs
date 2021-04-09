@@ -1,8 +1,10 @@
 use crate::RvmResult;
 
-pub type GuestPhysAddr = usize;
-pub type HostPhysAddr = usize;
-pub type HostVirtAddr = usize;
+pub use super::address::{
+    GuestPhysAddr,
+    HostPhysAddr,
+    HostVirtAddr,
+};
 
 pub trait IntoRvmPageTableFlags: core::fmt::Debug {
     // TODO: cache policy
