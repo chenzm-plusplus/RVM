@@ -93,7 +93,7 @@ impl Guest {
 
     /// Get the page table base address.
     pub(crate) fn rvm_page_table_phys(&self) -> usize {
-        self.gpm.table_phys()
+        usize::from(self.gpm.table_phys())
     }
 
     pub fn add_memory_region(
@@ -102,11 +102,11 @@ impl Guest {
         size: usize,
         hpaddr: Option<HostPhysAddr>,
     ) -> RvmResult {
-        if gpaddr & (PAGE_SIZE - 1) != 0 || size & (PAGE_SIZE - 1) != 0 {
+        if usize::from(gpaddr) & (PAGE_SIZE - 1) != 0 || size & (PAGE_SIZE - 1) != 0 {
             return Err(RvmError::InvalidParam);
         }
         if let Some(hpaddr) = hpaddr {
-            if hpaddr & (PAGE_SIZE - 1) != 0 {
+            if usize::from(hpaddr) & (PAGE_SIZE - 1) != 0 {
                 return Err(RvmError::InvalidParam);
             }
         }
@@ -151,7 +151,7 @@ impl Guest {
                 if addr & (PAGE_SIZE - 1) != 0 || size & (PAGE_SIZE - 1) != 0 {
                     Err(RvmError::InvalidParam)
                 } else {
-                    self.gpm.unmap(addr, size)?;
+                    self.gpm.unmap(GuestPhysAddr::from(addr), size)?;
                     self.traps.lock().push(kind, addr, size, port, key)
                 }
             }

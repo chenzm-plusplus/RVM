@@ -560,7 +560,7 @@ bitflags! {
 
 impl EPTPointer {
     pub fn from_table_phys(pml4_addr: HostPhysAddr) -> Self {
-        let aligned_addr = pml4_addr & !(PAGE_SIZE - 1);
+        let aligned_addr = usize::from(pml4_addr) & !(PAGE_SIZE - 1);
         unsafe {
             Self::from_bits_unchecked(aligned_addr as u64)
                 | Self::MEMORY_TYPE_WB

@@ -5,6 +5,7 @@ use crate::config::{
     PAGE_SIZE,
 };
 
+
 use crate::ffi::{alloc_frame, phys_to_virt};
 use crate::memory::{GuestPhysAddr, HostPhysAddr, HostVirtAddr};
 use crate::memory::{GuestPhysMemorySetTrait, IntoRvmPageTableFlags, RvmPageTable};
@@ -65,22 +66,24 @@ impl GuestPhysMemoryRegion {
 
     /// Test whether this region is (page) overlap with region [`start_paddr`, `end_paddr`)
     fn is_overlap_with(&self, start_paddr: GuestPhysAddr, end_paddr: GuestPhysAddr) -> bool {
-        let p0 = self.start_paddr / PAGE_SIZE;
-        let p1 = (self.end_paddr - 1) / PAGE_SIZE + 1;
-        let p2 = start_paddr / PAGE_SIZE;
-        let p3 = (end_paddr - 1) / PAGE_SIZE + 1;
+        let p0 = usize::from(self.start_paddr) / PAGE_SIZE;
+        let p1 = (usize::from(self.end_paddr) - 1) / PAGE_SIZE + 1;
+        let p2 = usize::from(start_paddr) / PAGE_SIZE;
+        let p3 = (usize::from(end_paddr) - 1) / PAGE_SIZE + 1;
         !(p1 <= p2 || p0 >= p3)
     }
 
     /// Map all pages in the region to page table `pt` to 0 for delay map
     fn map(&self, hpaddr: Option<HostPhysAddr>, pt: &Mutex<impl RvmPageTable>) {
         let mut pt = pt.lock();
-        for offset in (0..self.end_paddr - self.start_paddr).step_by(PAGE_SIZE) {
+        for offset in (0..usize::from(self.end_paddr - self.start_paddr)).step_by(PAGE_SIZE) {
+            let h_offset = HostPhysAddr::from(offset);
+            let g_offset = GuestPhysAddr::from(offset);
             if let Some(hpaddr) = hpaddr {
-                pt.map(self.start_paddr + offset, hpaddr + offset, self.attr)
+                pt.map(self.start_paddr + g_offset, hpaddr + h_offset, self.attr)
                     .unwrap();
             } else {
-                pt.map(self.start_paddr + offset, 0, GuestMemoryAttr::empty())
+                pt.map(self.start_paddr + g_offset, HostPhysAddr::from(0), GuestMemoryAttr::empty())
                     .unwrap();
             }
         }
@@ -89,8 +92,8 @@ impl GuestPhysMemoryRegion {
     /// Unmap all pages in the region from page table `pt`
     fn unmap(&self, pt: &Mutex<impl RvmPageTable>) {
         let mut pt = pt.lock();
-        for offset in (0..self.end_paddr - self.start_paddr).step_by(PAGE_SIZE) {
-            pt.unmap(self.start_paddr + offset).ok();
+        for offset in (0..usize::from(self.end_paddr - self.start_paddr)).step_by(PAGE_SIZE) {
+            pt.unmap(GuestPhysAddr::from(usize::from(self.start_paddr) + offset)).ok();
         }
     }
 
@@ -98,7 +101,7 @@ impl GuestPhysMemoryRegion {
     fn handle_page_fault(&self, gpaddr: GuestPhysAddr, pt: &Mutex<impl RvmPageTable>) -> bool {
         let mut pt = pt.lock();
         if let Ok(target) = pt.query(gpaddr) {
-            if target != 0 {
+            if usize::from(target) != 0 {
                 return false;
             }
         }
@@ -168,16 +171,16 @@ impl DefaultGuestPhysMemorySet {
         if size > PAGE_SIZE {
             return Err(RvmError::OutOfRange);
         }
-        let page_off = gpaddr & (PAGE_SIZE - 1);
+        let page_off = usize::from(gpaddr) & (PAGE_SIZE - 1);
         if (page_off + size) > PAGE_SIZE {
             return Err(RvmError::NotSupported);
         }
         self.find_region(gpaddr, |region: &GuestPhysMemoryRegion| {
-            if gpaddr + size > region.end_paddr {
+            if usize::from(gpaddr) + size > usize::from(region.end_paddr) {
                 return Err(RvmError::OutOfRange);
             }
-            let hpaddr = self.rvm_page_table.lock().query(gpaddr)? + page_off;
-            let hvaddr = phys_to_virt(hpaddr);
+            let hpaddr = usize::from(self.rvm_page_table.lock().query(gpaddr)?) + page_off;
+            let hvaddr = phys_to_virt(HostPhysAddr::from(hpaddr));
             Ok(hvaddr)
         })
     }
@@ -189,12 +192,16 @@ impl GuestPhysMemorySetTrait for DefaultGuestPhysMemorySet {
     }
 
     fn map(&self, gpaddr: GuestPhysAddr, size: usize, hpaddr: Option<HostPhysAddr>) -> RvmResult {
-        let start_paddr = gpaddr & !(PAGE_SIZE - 1);
+        let start_paddr = usize::from(gpaddr) & !(PAGE_SIZE - 1);
         let end_paddr = (start_paddr + size + PAGE_SIZE - 1) & !(PAGE_SIZE - 1);
         if start_paddr >= end_paddr {
             warn!("[RVM] invalid guest physical memory region");
             return Err(RvmError::InvalidParam);
         }
+
+        let start_paddr = GuestPhysAddr::from(start_paddr);
+        let end_paddr = GuestPhysAddr::from(end_paddr);
+
         if !self.test_free_region(start_paddr, end_paddr) {
             warn!("[RVM] guest physical memory region overlap");
             return Err(RvmError::InvalidParam);
@@ -218,7 +225,7 @@ impl GuestPhysMemorySetTrait for DefaultGuestPhysMemorySet {
     }
 
     fn unmap(&self, gpaddr: GuestPhysAddr, size: usize) -> RvmResult {
-        let start_paddr = gpaddr & !(PAGE_SIZE - 1);
+        let start_paddr = usize::from(gpaddr) & !(PAGE_SIZE - 1);
         let end_paddr = (start_paddr + size + PAGE_SIZE - 1) & !(PAGE_SIZE - 1);
         if start_paddr >= end_paddr {
             warn!("[RVM] invalid guest physical memory region");
@@ -227,7 +234,7 @@ impl GuestPhysMemorySetTrait for DefaultGuestPhysMemorySet {
 
         if let Some((idx, region)) =
             self.regions.lock().iter().enumerate().find(|(_, region)| {
-                region.start_paddr == start_paddr && region.end_paddr == end_paddr
+                region.start_paddr == GuestPhysAddr::from(start_paddr) && region.end_paddr == GuestPhysAddr::from(end_paddr)
             })
         {
             region.unmap(&self.rvm_page_table);
@@ -235,14 +242,17 @@ impl GuestPhysMemorySetTrait for DefaultGuestPhysMemorySet {
             return Ok(());
         }
 
-        if !self.test_free_region(start_paddr, end_paddr) {
+        let start_paddr_p = GuestPhysAddr::from(start_paddr);
+        let end_paddr_p = GuestPhysAddr::from(end_paddr);
+
+        if !self.test_free_region(start_paddr_p, end_paddr_p) {
             warn!("[RVM] partially unmap physical memory region is not supported");
             return Err(RvmError::NotSupported);
         }
 
         GuestPhysMemoryRegion {
-            start_paddr,
-            end_paddr,
+            start_paddr: start_paddr_p,
+            end_paddr: end_paddr_p,
             attr: GuestMemoryAttr::default(),
         }
         .unmap(&self.rvm_page_table);
@@ -252,19 +262,19 @@ impl GuestPhysMemorySetTrait for DefaultGuestPhysMemorySet {
     fn read_memory(&self, gpaddr: GuestPhysAddr, buf: &mut [u8]) -> RvmResult<usize> {
         let size = buf.len();
         let hvaddr = self.query_range(gpaddr, size)?;
-        unsafe { buf.copy_from_slice(core::slice::from_raw_parts(hvaddr as *const u8, size)) }
+        unsafe { buf.copy_from_slice(core::slice::from_raw_parts(usize::from(hvaddr) as *const u8, size)) }
         Ok(size)
     }
 
     fn write_memory(&self, gpaddr: GuestPhysAddr, buf: &[u8]) -> RvmResult<usize> {
         let size = buf.len();
         let hvaddr = self.query_range(gpaddr, size)?;
-        unsafe { core::slice::from_raw_parts_mut(hvaddr as *mut u8, size).copy_from_slice(buf) }
+        unsafe { core::slice::from_raw_parts_mut(usize::from(hvaddr) as *mut u8, size).copy_from_slice(buf) }
         Ok(size)
     }
 
     fn handle_page_fault(&self, gpaddr: GuestPhysAddr) -> RvmResult {
-        debug!("[RVM] handle RVM page fault @ {:#x}", gpaddr);
+        debug!("[RVM] handle RVM page fault @ {:#x}", usize::from(gpaddr));
         self.find_region(gpaddr, |region| {
             region.handle_page_fault(gpaddr, &self.rvm_page_table);
             Ok(())

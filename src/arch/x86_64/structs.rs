@@ -8,6 +8,11 @@ use spin::Mutex;
 use x86::bits64::vmx;
 use x86_64::registers::control::{Cr0, Cr4, Cr4Flags};
 
+use crate::memory::{
+    HostVirtAddr,
+    HostPhysAddr,
+};
+
 use super::msr::*;
 use super::utils::{cr0_is_valid, cr4_is_valid};
 use crate::ffi::{alloc_frame, dealloc_frame, phys_to_virt};
@@ -20,14 +25,17 @@ use crate::config::{
 /// VMCS region, or MSR page, etc.
 #[derive(Debug)]
 pub struct VmxPage {
-    paddr: usize,
+    // paddr: usize,
+    paddr: HostPhysAddr,
 }
 
 impl VmxPage {
     pub fn alloc(fill: u8) -> RvmResult<Self> {
         if let Some(paddr) = alloc_frame() {
             let page = Self { paddr };
-            unsafe { core::ptr::write_bytes(page.vaddr() as *mut u8, fill, PAGE_SIZE) };
+            //因为HostVirtAddr实际上就是地址的值，vaddr其实就是把地址的值取出来
+            //所以这里翻译成usize是没有问题的
+            unsafe { core::ptr::write_bytes(usize::from(page.vaddr()) as *mut u8, fill, PAGE_SIZE) };
             Ok(page)
         } else {
             Err(RvmError::NoMemory)
@@ -42,14 +50,17 @@ impl VmxPage {
     }
 
     pub fn phys_addr(&self) -> u64 {
-        self.paddr as u64
+        usize::from(self.paddr) as u64
     }
 
+    //todo...check it can work
+    //我觉得这里可以work是因为事实上HosstVirtAddr等struct并没有做任何事情，只是把usize以一种安全的方式封装了起来
+    //所以这里就当成是在操作usize就可以了，所以用usize翻译过来当地址才没问题（大概吧）
     pub fn as_ptr<T>(&self) -> *mut T {
-        self.vaddr() as *mut T
+        usize::from(self.vaddr()) as *mut T
     }
 
-    fn vaddr(&self) -> usize {
+    fn vaddr(&self) -> HostVirtAddr {
         phys_to_virt(self.paddr)
     }
 }
@@ -102,7 +113,7 @@ impl MsrList {
     }
 
     pub fn paddr(&self) -> u64 {
-        self.page.paddr as u64
+        usize::from(self.page.paddr) as u64
     }
 
     pub unsafe fn edit_entry(&mut self, index: usize, msr_index: u32, msr_value: u64) {
@@ -127,7 +138,7 @@ impl MsrBitmaps {
     }
 
     pub fn paddr(&self) -> u64 {
-        self.page.paddr as u64
+        usize::from(self.page.paddr) as u64
     }
 
     pub unsafe fn ignore(&mut self, msr: u32, ignore_writes: bool) {

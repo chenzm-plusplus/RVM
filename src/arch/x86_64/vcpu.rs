@@ -24,6 +24,10 @@ use x86_64::{
     registers::rflags::RFlags,
 };
 
+use crate::memory::{
+    HostPhysAddr,
+};
+
 const BASE_PROCESSOR_VPID: u16 = 1;
 const X86_FLAGS_RESERVED_ONES: usize = 1 << 1;
 const X86_FLAGS_USER: u64 = RFlags::CARRY_FLAG.bits()
@@ -617,7 +621,7 @@ impl Vcpu {
         // treated as guest-physical addresses. Guest-physical addresses are
         // translated by traversing a set of EPT paging structures to produce
         // physical addresses that are used to access memory.
-        vmcs.set_ept_pointer(self.guest.rvm_page_table_phys());
+        vmcs.set_ept_pointer(HostPhysAddr::from(self.guest.rvm_page_table_phys()));
 
         // Setup MSR handling.
         vmcs.write64(MSR_BITMAP, self.guest.msr_bitmaps.paddr());

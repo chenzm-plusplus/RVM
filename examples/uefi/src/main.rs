@@ -43,15 +43,15 @@ fn setup() -> RvmResult<(Arc<Guest>, Vcpu)> {
     let hpaddr0 = alloc_frame().unwrap();
     let hpaddr1 = alloc_frame().unwrap();
     let hpaddr2 = alloc_frame().unwrap();
-    guest.add_memory_region(0, 0x1000, Some(hpaddr0))?;
-    guest.add_memory_region(0x1000, 0x1000, Some(hpaddr1))?;
-    guest.add_memory_region(0x2000, 0x1000, Some(hpaddr2))?;
+    guest.add_memory_region(GuestPhysAddr::from(0), 0x1000, Some(HostPhysAddr::from(hpaddr0)))?;
+    guest.add_memory_region(GuestPhysAddr::from(0x1000), 0x1000, Some(HostPhysAddr::from(hpaddr1)))?;
+    guest.add_memory_region(GuestPhysAddr::from(0x2000), 0x1000, Some(HostPhysAddr::from(hpaddr2)))?;
     unsafe {
         core::ptr::copy(hypercall as usize as *const u8, hpaddr2 as *mut u8, 0x100);
     }
 
     // Delay mapping
-    guest.add_memory_region(0x3000, 0x1000 * 10, None)?;
+    guest.add_memory_region(GuestPhysAddr::from(0x3000), 0x1000 * 10, None)?;
 
     // Set MMIO trap
     guest.set_trap(TrapKind::GuestTrapMem, 0xfff000, 0x1000, None, 0x2333)?;

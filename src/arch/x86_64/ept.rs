@@ -25,7 +25,7 @@ impl EPageTable {
     /// Create a new EPageTable.
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let mut epage_table = Self { ept_page_root: 0 };
+        let mut epage_table = Self { ept_page_root: HostPhysAddr::from(0) };
         epage_table.build();
         epage_table
     }
@@ -37,10 +37,10 @@ impl EPageTable {
         created_intrm: bool,
     ) -> RvmResult<&mut EPTEntry> {
         let mut page_table = self.ept_page_root;
-        let guest_paddr = guest_paddr & !(PAGE_SIZE - 1);
+        let guest_paddr = usize::from(guest_paddr) & !(PAGE_SIZE - 1);
         for level in 0..4 {
             let index = (guest_paddr >> (12 + (3 - level) * 9)) & 0o777;
-            let entry = EPTEntry::from(page_table + index * 8);
+            let entry = EPTEntry::from(page_table + HostPhysAddr::from(index * 8));
             if level == 3 {
                 return Ok(entry);
             }
@@ -54,35 +54,35 @@ impl EPageTable {
                     return Err(RvmError::NoMemory);
                 }
             }
-            page_table = entry.addr();
+            page_table = HostPhysAddr::from(entry.addr());
         }
         unreachable!()
     }
 
     fn clear_page(start_hpaddr: HostPhysAddr) {
         for idx in 0..ENTRY_COUNT {
-            EPTEntry::from(start_hpaddr + idx * 8).set_unused();
+            EPTEntry::from(start_hpaddr + HostPhysAddr::from(idx * 8)).set_unused();
         }
     }
 
     fn build(&mut self) {
-        assert_eq!(self.ept_page_root, 0);
+        assert_eq!(usize::from(self.ept_page_root), 0);
         self.ept_page_root = alloc_frame().expect("failed to allocate ept_page_root frame");
         Self::clear_page(self.ept_page_root);
         debug!(
             "[RVM] EPageTable: new EPT page root @ {:#x}",
-            self.ept_page_root
+            usize::from(self.ept_page_root)
         );
     }
 
     fn destroy_dfs(&self, page: HostPhysAddr, level: usize) {
         for idx in 0..ENTRY_COUNT {
-            let entry = EPTEntry::from(page + idx * 8);
+            let entry = EPTEntry::from(page + HostPhysAddr::from(idx * 8));
             if !entry.is_unused() {
                 if level == 3 {
-                    dealloc_frame(entry.addr());
+                    dealloc_frame(HostPhysAddr::from(entry.addr()));
                 } else {
-                    self.destroy_dfs(entry.addr(), level + 1);
+                    self.destroy_dfs(HostPhysAddr::from(entry.addr()), level + 1);
                 }
             }
         }
@@ -90,9 +90,9 @@ impl EPageTable {
     }
 
     fn destroy(&mut self) {
-        debug!("[RVM] EPageTable: destroy EPT @ {:#x}", self.ept_page_root);
+        debug!("[RVM] EPageTable: destroy EPT @ {:#x}", usize::from(self.ept_page_root));
         self.destroy_dfs(self.ept_page_root, 0);
-        self.ept_page_root = 0;
+        self.ept_page_root = HostPhysAddr::from(0);
     }
 }
 
@@ -134,7 +134,7 @@ impl RvmPageTable for EPageTable {
     fn protect(&mut self, gpaddr: GuestPhysAddr, flags: impl IntoRvmPageTableFlags) -> RvmResult {
         let entry = self.get_entry(gpaddr, false)?;
         entry.set_entry(
-            entry.addr(),
+            HostPhysAddr::from(entry.addr()),
             EPTFlags::from(flags),
             EPTMemoryType::WriteBack,
         );
@@ -144,7 +144,7 @@ impl RvmPageTable for EPageTable {
     /// Query the host physical address which the guest physical frame of
     /// `gpaddr` maps to.
     fn query(&mut self, gpaddr: GuestPhysAddr) -> RvmResult<HostPhysAddr> {
-        Ok(self.get_entry(gpaddr, false)?.addr())
+        Ok(HostPhysAddr::from(self.get_entry(gpaddr, false)?.addr()))
     }
 
     /// Page table base address.
@@ -160,7 +160,7 @@ struct EPTEntry {
 impl EPTEntry {
     pub fn from(hpaddr: HostPhysAddr) -> &'static mut Self {
         let hvaddr = phys_to_virt(hpaddr);
-        unsafe { &mut *(hvaddr as *mut Self) }
+        unsafe { &mut *(usize::from(hvaddr) as *mut Self) }
     }
 
     /// Returns whether this entry is zero.
@@ -171,7 +171,8 @@ impl EPTEntry {
 
     /// Returns the host physical address mapped by this entry, might be zero.
     #[inline]
-    pub const fn addr(&self) -> HostPhysAddr {
+    pub const fn addr(&self) -> usize {
+        // HostPhysAddr::from((self.entry & 0x0000_ffff_ffff_f000) as usize)
         (self.entry & 0x0000_ffff_ffff_f000) as usize
     }
 
@@ -195,7 +196,7 @@ impl EPTEntry {
 
     #[inline]
     pub fn set_entry(&mut self, hpaddr: HostPhysAddr, flags: EPTFlags, mem_type: EPTMemoryType) {
-        let hpaddr = hpaddr & !(PAGE_SIZE - 1);
+        let hpaddr = usize::from(hpaddr) & !(PAGE_SIZE - 1);
         self.entry = hpaddr as u64 | flags.bits();
         self.entry.set_bits(3..6, mem_type as u64);
     }

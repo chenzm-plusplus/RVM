@@ -8,6 +8,10 @@ use spin::Mutex;
 use x86::msr;
 use x86_64::registers::{control::Cr0Flags, model_specific::EferFlags};
 
+use crate::memory::{
+    GuestPhysAddr,
+};
+
 use super::feature::*;
 use super::msr::Msr;
 use super::structs::ExitReason;
@@ -644,7 +648,7 @@ fn handle_mmio(
             };
             // FIXME: read via guest vaddr
             gpm.read_memory(
-                exit_info.guest_rip,
+                GuestPhysAddr::from(exit_info.guest_rip),
                 &mut packet.inst_buf[..packet.inst_len as usize],
             )?;
             Ok(Some(RvmExitPacket::new_mmio_packet(trap.key, packet)))
@@ -670,7 +674,7 @@ fn handle_ept_violation(
     match handle_mmio(exit_info, &ept_vio_info, vmcs, guest_paddr, gpm, traps) {
         Ok(packet) => Ok(packet),
         Err(RvmError::NotFound) => {
-            gpm.handle_page_fault(guest_paddr).map_err(|e| {
+            gpm.handle_page_fault(GuestPhysAddr::from(guest_paddr)).map_err(|e| {
                 warn!(
                     "[RVM] VM exit: Unhandled EPT violation @ {:#x}",
                     guest_paddr
@@ -720,7 +724,7 @@ pub fn vmexit_handler(
     if res.is_err() {
         // FIXME: read via guest vaddr
         let mut buf = vec![0; exit_info.exit_instruction_length as usize];
-        gpm.read_memory(vmcs.readXX(GUEST_CS_BASE) + exit_info.guest_rip, &mut buf)
+        gpm.read_memory(GuestPhysAddr::from(vmcs.readXX(GUEST_CS_BASE) + exit_info.guest_rip), &mut buf)
             .expect("[RVM] read guest memory failed");
         warn!(
             "[RVM] VM exit handler for reason {:?} returned {:?}\n{}\nInstruction: {:02x?}",
