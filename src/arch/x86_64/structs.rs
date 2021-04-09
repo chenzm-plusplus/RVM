@@ -11,7 +11,10 @@ use x86_64::registers::control::{Cr0, Cr4, Cr4Flags};
 use super::msr::*;
 use super::utils::{cr0_is_valid, cr4_is_valid};
 use crate::ffi::{alloc_frame, dealloc_frame, phys_to_virt};
-use crate::{RvmError, RvmResult, PAGE_SIZE};
+use crate::{RvmError, RvmResult,};
+use crate::config::{
+    PAGE_SIZE,
+};
 
 /// A physical frame (or virtual page) of size PAGE_SIZE used as VMXON region,
 /// VMCS region, or MSR page, etc.

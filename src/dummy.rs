@@ -1,8 +1,12 @@
 use alloc::{sync::Arc, vec::Vec};
 use spin::Mutex;
 
+use crate::config::{
+    PAGE_SIZE,
+};
+
 use crate::ffi::{alloc_frame, phys_to_virt};
-use crate::memory::{GuestPhysAddr, HostPhysAddr, HostVirtAddr, PAGE_SIZE};
+use crate::memory::{GuestPhysAddr, HostPhysAddr, HostVirtAddr};
 use crate::memory::{GuestPhysMemorySetTrait, IntoRvmPageTableFlags, RvmPageTable};
 use crate::{ArchRvmPageTable, RvmError, RvmResult};
 

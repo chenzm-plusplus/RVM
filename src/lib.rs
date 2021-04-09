@@ -22,6 +22,7 @@ mod interrupt;
 mod memory;
 mod packet;
 mod trap_map;
+mod config;
 
 #[cfg(target_arch = "x86_64")]
 pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu};

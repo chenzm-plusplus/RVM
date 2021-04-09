@@ -6,7 +6,11 @@ use x86_64::instructions::interrupts;
 
 use self::{VmcsField32::*, VmcsField64::*};
 use super::utils::{invept, InvEptType};
-use crate::memory::{HostPhysAddr, PAGE_SIZE};
+use crate::memory::{HostPhysAddr};
+use crate::config::{
+    PAGE_SIZE,
+};
+
 use crate::{RvmError, RvmResult};
 
 /// 16-Bit VMCS Fields.

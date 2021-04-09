@@ -5,7 +5,11 @@ use bitflags::bitflags;
 use core::{convert::TryFrom, fmt};
 use numeric_enum_macro::numeric_enum;
 
-use crate::memory::{GuestPhysAddr, HostPhysAddr, IntoRvmPageTableFlags, RvmPageTable, PAGE_SIZE};
+use crate::config::{
+    PAGE_SIZE,
+};
+
+use crate::memory::{GuestPhysAddr, HostPhysAddr, IntoRvmPageTableFlags, RvmPageTable,};
 use crate::{ffi::*, RvmError, RvmResult};
 
 /// The number of entries in a page table.

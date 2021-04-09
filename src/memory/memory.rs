@@ -1,7 +1,5 @@
 use crate::RvmResult;
 
-pub const PAGE_SIZE: usize = 0x1000;
-
 pub type GuestPhysAddr = usize;
 pub type HostPhysAddr = usize;
 pub type HostVirtAddr = usize;
