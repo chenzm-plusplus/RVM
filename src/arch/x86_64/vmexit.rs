@@ -25,7 +25,7 @@ use super::vmcs::{
 };
 use crate::memory::GuestPhysMemorySetTrait;
 use crate::packet::*;
-use crate::trap_map::{TrapKind, TrapMap};
+use crate::interrupt::trap_map::{TrapKind, TrapMap};
 use crate::{RvmError, RvmResult};
 
 type ExitResult = RvmResult<Option<RvmExitPacket>>;

@@ -8,7 +8,7 @@ use x86::msr::*;
 
 use super::structs::{MsrBitmaps, VMM_GLOBAL_STATE};
 use crate::memory::{GuestPhysAddr, GuestPhysMemorySetTrait, HostPhysAddr};
-use crate::trap_map::{RvmPort, TrapKind, TrapMap};
+use crate::interrupt::trap_map::{RvmPort, TrapKind, TrapMap};
 use crate::config::{
     PAGE_SIZE,
 };

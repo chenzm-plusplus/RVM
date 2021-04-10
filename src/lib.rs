@@ -16,10 +16,9 @@ extern crate log;
 #[cfg(target_arch = "x86_64")]
 #[path = "arch/x86_64/mod.rs"]
 mod arch;
-mod interrupt;
+mod interrupt;//trap_map
 mod memory;//dummy,ffi
 mod packet;
-mod trap_map;
 mod config;
 
 #[cfg(target_arch = "x86_64")]
@@ -28,7 +27,7 @@ pub use memory::dummy::{DefaultGuestPhysMemorySet, GuestMemoryAttr};
 pub use memory::*;
 pub use packet::*;
 pub use rvm_macros::*;
-pub use trap_map::{RvmPort, TrapKind};
+pub use interrupt::trap_map::{RvmPort, TrapKind};
 
 pub type RvmResult<T = ()> = Result<T, RvmError>;
 
