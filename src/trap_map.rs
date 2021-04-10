@@ -4,6 +4,13 @@ use alloc::collections::{btree_map::Entry, BTreeMap};
 use alloc::sync::Arc;
 use core::convert::TryFrom;
 
+//GuestTrapIo：通过 I/O 指令产生的同步 I/O
+//GuestTrapMem：通过 MMIO 产生的同步 I/O
+//GuestTrapBell：通过 MMIO 产生的异步 I/O
+//上述“同步”和“异步”的区别在于，同步 I/O 会在发生后立即返回用户态，
+//而异步 I/O 不会，而是将打包好的 I/O 操作存放在一个特殊区域(port)，并继续 Guest 的执行，
+//用户程序可在另一线程中读取到该 I/O 操作，从而避免用户/内核空间的切换，提高运行效率。
+
 use crate::packet::RvmExitPacket;
 use crate::{RvmError, RvmResult};
 
