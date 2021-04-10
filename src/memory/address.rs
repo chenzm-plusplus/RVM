@@ -30,7 +30,6 @@ impl Debug for HostVirtAddr {
         f.write_fmt(format_args!("HVA:{:#x}", self.0))
     }
 }
-
 impl Debug for GuestPhysAddr {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_fmt(format_args!("GPA:{:#x}", self.0))
