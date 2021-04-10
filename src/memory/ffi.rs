@@ -1,5 +1,7 @@
 use crate::{HostPhysAddr, HostVirtAddr};
 
+//这个文档当中是一些内存分配相关的接口
+
 /// Allocate physical frame
 pub fn frame_alloc() -> Option<HostPhysAddr> {
     unsafe { rvm_alloc_frame() }

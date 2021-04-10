@@ -17,7 +17,6 @@ extern crate log;
 #[path = "arch/x86_64/mod.rs"]
 mod arch;
 mod dummy;
-mod ffi;
 mod interrupt;
 mod memory;
 mod packet;

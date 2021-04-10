@@ -10,7 +10,7 @@ use crate::config::{
 };
 
 use crate::memory::{GuestPhysAddr, HostPhysAddr, IntoRvmPageTableFlags, RvmPageTable,};
-use crate::{ffi::*, RvmError, RvmResult};
+use crate::{memory::ffi::*, RvmError, RvmResult};
 
 /// The number of entries in a page table.
 const ENTRY_COUNT: usize = 512;
