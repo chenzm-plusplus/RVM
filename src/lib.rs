@@ -16,16 +16,15 @@ extern crate log;
 #[cfg(target_arch = "x86_64")]
 #[path = "arch/x86_64/mod.rs"]
 mod arch;
-mod dummy;
 mod interrupt;
-mod memory;
+mod memory;//dummy,ffi
 mod packet;
 mod trap_map;
 mod config;
 
 #[cfg(target_arch = "x86_64")]
 pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu};
-pub use dummy::{DefaultGuestPhysMemorySet, GuestMemoryAttr};
+pub use memory::dummy::{DefaultGuestPhysMemorySet, GuestMemoryAttr};
 pub use memory::*;
 pub use packet::*;
 pub use rvm_macros::*;
