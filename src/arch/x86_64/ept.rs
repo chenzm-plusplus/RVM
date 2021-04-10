@@ -46,7 +46,7 @@ impl EPageTable {
             }
             if entry.is_unused() {
                 if created_intrm {
-                    let new_page = alloc_frame().expect("failed to alloc frame");
+                    let new_page = frame_alloc().expect("failed to alloc frame");
                     Self::clear_page(new_page);
                     let intermediate_flags = EPTFlags::READ | EPTFlags::WRITE | EPTFlags::EXECUTE;
                     entry.set_entry(new_page, intermediate_flags, EPTMemoryType::empty());
@@ -67,7 +67,7 @@ impl EPageTable {
 
     fn build(&mut self) {
         assert_eq!(usize::from(self.ept_page_root), 0);
-        self.ept_page_root = alloc_frame().expect("failed to allocate ept_page_root frame");
+        self.ept_page_root = frame_alloc().expect("failed to allocate ept_page_root frame");
         Self::clear_page(self.ept_page_root);
         debug!(
             "[RVM] EPageTable: new EPT page root @ {:#x}",
@@ -80,13 +80,13 @@ impl EPageTable {
             let entry = EPTEntry::from(page + HostPhysAddr::from(idx * 8));
             if !entry.is_unused() {
                 if level == 3 {
-                    dealloc_frame(HostPhysAddr::from(entry.addr()));
+                    frame_dealloc(HostPhysAddr::from(entry.addr()));
                 } else {
                     self.destroy_dfs(HostPhysAddr::from(entry.addr()), level + 1);
                 }
             }
         }
-        dealloc_frame(page);
+        frame_dealloc(page);
     }
 
     fn destroy(&mut self) {

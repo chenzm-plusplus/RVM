@@ -15,7 +15,7 @@ use crate::memory::{
 
 use super::msr::*;
 use super::utils::{cr0_is_valid, cr4_is_valid};
-use crate::ffi::{alloc_frame, dealloc_frame, phys_to_virt};
+use crate::ffi::{frame_alloc, frame_dealloc, phys_to_virt};
 use crate::{RvmError, RvmResult,};
 use crate::config::{
     PAGE_SIZE,
@@ -31,7 +31,7 @@ pub struct VmxPage {
 
 impl VmxPage {
     pub fn alloc(fill: u8) -> RvmResult<Self> {
-        if let Some(paddr) = alloc_frame() {
+        if let Some(paddr) = frame_alloc() {
             let page = Self { paddr };
             //因为HostVirtAddr实际上就是地址的值，vaddr其实就是把地址的值取出来
             //所以这里翻译成usize是没有问题的
@@ -68,7 +68,7 @@ impl VmxPage {
 impl Drop for VmxPage {
     fn drop(&mut self) {
         debug!("VmxPage free {:#x?}", self);
-        dealloc_frame(self.paddr);
+        frame_dealloc(self.paddr);
     }
 }
 

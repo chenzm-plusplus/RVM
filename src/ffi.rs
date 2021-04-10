@@ -1,12 +1,12 @@
 use crate::{HostPhysAddr, HostVirtAddr};
 
 /// Allocate physical frame
-pub fn alloc_frame() -> Option<HostPhysAddr> {
+pub fn frame_alloc() -> Option<HostPhysAddr> {
     unsafe { rvm_alloc_frame() }
 }
 
 /// Deallocate physical frame
-pub fn dealloc_frame(paddr: HostPhysAddr) {
+pub fn frame_dealloc(paddr: HostPhysAddr) {
     unsafe { rvm_dealloc_frame(paddr) }
 }
 

@@ -6,7 +6,7 @@ use crate::config::{
 };
 
 
-use crate::ffi::{alloc_frame, phys_to_virt};
+use crate::ffi::{frame_alloc, phys_to_virt};
 use crate::memory::{GuestPhysAddr, HostPhysAddr, HostVirtAddr};
 use crate::memory::{GuestPhysMemorySetTrait, IntoRvmPageTableFlags, RvmPageTable};
 use crate::{ArchRvmPageTable, RvmError, RvmResult};
@@ -105,7 +105,7 @@ impl GuestPhysMemoryRegion {
                 return false;
             }
         }
-        let frame = alloc_frame().expect("failed to alloc frame");
+        let frame = frame_alloc().expect("failed to alloc frame");
         pt.map(gpaddr, frame, self.attr).unwrap();
         // TODO: flush TLB?
         true
