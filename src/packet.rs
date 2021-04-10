@@ -30,28 +30,28 @@ pub struct IoPacket {
     pub data: [u8; 4],
 }
 
-#[cfg(target_arch = "x86_64")]
-#[repr(C)]
-#[derive(Debug, Default)]
-pub struct MmioPacket {
-    pub addr: u64,
-    pub inst_len: u8,
-    pub inst_buf: [u8; 15],
-    pub default_operand_size: u8,
-}
+// #[cfg(target_arch = "x86_64")]
+// #[repr(C)]
+// #[derive(Debug, Default)]
+// pub struct MmioPacket {
+//     pub addr: u64,
+//     pub inst_len: u8,
+//     pub inst_buf: [u8; 15],
+//     pub default_operand_size: u8,
+// }
 
-#[cfg(target_arch = "aarch64")]
-#[repr(C)]
-#[derive(Debug, Default)]
-pub struct MmioPacket {
-    pub addr: u64,
-    pub access_size: u8,
-    pub sign_extend: bool,
-    pub xt: u8,
-    pub read: bool,
-    pub _padding1: [u8; 4],
-    pub data: u64,
-}
+// #[cfg(target_arch = "aarch64")]
+// #[repr(C)]
+// #[derive(Debug, Default)]
+// pub struct MmioPacket {
+//     pub addr: u64,
+//     pub access_size: u8,
+//     pub sign_extend: bool,
+//     pub xt: u8,
+//     pub read: bool,
+//     pub _padding1: [u8; 4],
+//     pub data: u64,
+// }
 
 #[repr(C)]
 pub union RvmExitPacketInnner {
