@@ -65,6 +65,7 @@ struct HostState {
 #[repr(C)]
 #[derive(Debug, Default, Clone)]
 pub struct GuestState {
+    //就是我的每一个guest都要保存哪些状态
     // Extended control registers.
     pub xcr0: u64,
     // Control registers.
@@ -108,6 +109,7 @@ macro_rules! copy_state {
 }
 
 impl GuestState {
+    //错误处理函数
     pub fn dump(&self, vmcs: &AutoVmcs) -> alloc::string::String {
         format!(
             "VCPU Dump:\n\
@@ -151,6 +153,7 @@ pub struct InterruptState {
 }
 
 impl InterruptState {
+    //中断，就先不管了
     fn new() -> Self {
         let mut idt = dtables::DescriptorTablePointer::new(&0u128);
         unsafe { asm!("sidt [{}]", in(reg) &mut idt) };
@@ -223,13 +226,13 @@ impl InterruptState {
 
 /// Represents a virtual CPU within a guest.
 pub struct Vcpu {
-    vpid: u16,
-    guest: Arc<Guest>,
-    running: AtomicBool,
-    vmx_state: Pin<Box<VmxState>>,
-    vmcs_page: VmxPage,
-    host_msr_list: MsrList,
-    guest_msr_list: MsrList,
+    vpid: u16,//标记我是哪个CPU
+    guest: Arc<Guest>,//自己对应的Guest要保存起来方便找
+    running: AtomicBool,//
+    vmx_state: Pin<Box<VmxState>>,//？
+    vmcs_page: VmxPage,//？？？
+    host_msr_list: MsrList,//？？？
+    guest_msr_list: MsrList,//？？？
     interrupt_state: InterruptState,
 }
 

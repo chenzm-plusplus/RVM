@@ -1,45 +1,8 @@
-// #![allow(clippy::unnecessary_wraps)]
-
-// #[macro_use]
-// pub mod instructions;
-
-// pub mod csr;
-// pub mod bits;
-// pub mod sbi;
-
-// pub use instructions::*;
-
-// pub const CAUSE_STRINGS: [&str; 16] = [
-//     "Instruction address misaligned",
-//     "Instruction access fault",
-//     "Illegal instruction",
-//     "Breakpoint",
-//     "Load address misaligned",
-//     "Load access fault",
-//     "Store/AMO address misaligned",
-//     "Store/AMO access fault",
-//     "Environment call from U-mode",
-//     "Environment call from S-mode",
-//     "Reserved (10)",
-//     "Environment call from M-mode",
-//     "Instruction page fault",
-//     "Load page fault",
-//     "Reserved (13)",
-//     "Store/AMO page fault"
-// ];
-
-// pub fn cause_to_str(cause: u64) -> &'static str {
-//     if (cause as i64) < 0 {
-//         "Interrupt"
-//     } else if cause >= 16 {
-//         "Reserved (>=16)"
-//     } else {
-//         CAUSE_STRINGS[cause as usize]
-//     }
-// }
 #![allow(clippy::unnecessary_wraps)]
 
-use raw_cpuid::CpuId;
+// 本来希望能在这里判断一下是否硬件上支持Hypervisor
+// 就先假设它支持好了
+// use raw_cpuid::CpuId;
 
 mod consts;
 mod ept;
@@ -58,10 +21,14 @@ pub use ept::EPageTable as ArchRvmPageTable;
 pub use guest::Guest;
 pub use vcpu::Vcpu;
 
+//riscv或许有一种类似的方法是也可以判断是否硬件上支持Hypervisor的
+//不会判断啦！先假设一定开启过H好了
+//TODO:需要找一个包，支持快速判断硬件是否支持H。
 pub fn check_hypervisor_feature() -> bool {
-    if let Some(feature) = CpuId::new().get_feature_info() {
-        feature.has_vmx()
-    } else {
-        false
-    }
+    // if let Some(feature) = CpuId::new().get_feature_info() {
+    //     feature.has_vmx()
+    // } else {
+    //     false
+    // }
+    true
 }

@@ -1,4 +1,7 @@
 // //! The virtual CPU within a guest.
+//RISC-V describes the current virtualization mode using the symbol V.  
+//If  V=1 then the system is currently in guest context, otherwise it is in host context.
+//so how can I get CPU Vi
 
 // use super::{
 //     msr::*,
