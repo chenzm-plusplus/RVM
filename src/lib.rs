@@ -21,7 +21,7 @@ mod memory;//dummy,ffi
 mod packet;
 mod config;
 
-#[cfg(target_arch = "x86_64", "riscv64")]
+#[cfg(target_arch = "x86_64", target_arch = "riscv64")]
 pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu};
 pub use memory::dummy::{DefaultGuestPhysMemorySet, GuestMemoryAttr};
 pub use memory::*;
