@@ -16,13 +16,22 @@ extern crate log;
 #[cfg(target_arch = "x86_64")]
 #[path = "arch/x86_64/mod.rs"]
 mod arch;
+
+#[cfg(target_arch = "riscv64")]
+#[path = "arch/riscv64/mod.rs"]
+mod arch;
+
 mod interrupt;//trap_map
 mod memory;//dummy,ffi
 mod packet;
 mod config;
 
-#[cfg(target_arch = "x86_64", target_arch = "riscv64")]
+#[cfg(target_arch = "x86_64")]
 pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu};
+
+#[cfg(target_arch = "riscv64")]
+pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu};
+
 pub use memory::dummy::{DefaultGuestPhysMemorySet, GuestMemoryAttr};
 pub use memory::*;
 pub use packet::*;
@@ -116,6 +125,10 @@ pub struct VcpuState {
     pub t5: u64,
     pub t6: u64,
     //按道理应该实现64位寄存器，但是剩下32位都是浮点寄存器（？？？）所以大概不用实现
+    //下面是为了状态保存与恢复
+    pub sepc: u64,
+	pub sstatus: u64,
+	pub hstatus: u64,
 }
 
 #[cfg(target_arch = "aarch64")]

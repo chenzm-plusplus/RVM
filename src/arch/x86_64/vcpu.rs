@@ -226,7 +226,7 @@ impl InterruptState {
 
 /// Represents a virtual CPU within a guest.
 pub struct Vcpu {
-    vpid: u16,//标记我是哪个CPU
+    vpid: u16,
     guest: Arc<Guest>,//自己对应的Guest要保存起来方便找
     running: AtomicBool,//
     vmx_state: Pin<Box<VmxState>>,//？
