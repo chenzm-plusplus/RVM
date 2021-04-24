@@ -1,4 +1,15 @@
 
+use super::{
+    Guest,
+};
+
+use alloc::{
+    sync::Arc,
+};
+
+use crate::{
+    RvmResult,
+};
 
 /// Represents a virtual CPU within a guest.
 pub struct Vcpu {
@@ -48,9 +59,9 @@ pub struct GuestState {
 impl Vcpu{
 	pub fn new(entry: u64, guest: Arc<Guest>) -> RvmResult<Self> {
 
-        if entry > guest.gpm.size() {
-            return Err(RvmError::InvalidParam);
-        }
+        // if entry > guest.gpm.size() {
+        //     return Err(RvmError::InvalidParam);
+        // }
 
         let mut vcpu = Self {
             guest: guest.clone(),

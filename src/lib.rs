@@ -6,7 +6,7 @@
 #![feature(global_asm)]
 #![feature(untagged_unions)]
 #![allow(clippy::upper_case_acronyms)]
-#![deny(warnings)]
+// #![deny(warnings)]
 
 #[macro_use]
 extern crate alloc;

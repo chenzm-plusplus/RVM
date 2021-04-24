@@ -2,7 +2,8 @@ MODE ?= release
 EFI := target/riscv64gc-unknown-none-elf/$(MODE)/uefi.efi
 OVMF := OVMF.fd
 ESP := target/riscv64gc-unknown-none-elf/$(MODE)/esp
-QEMU_ARGS := -net none -nographic -enable-kvm -cpu host,+vmx
+# QEMU_ARGS := -net none -nographic -enable-kvm -cpu host,+vmx
+QEMU_ARGS := -accel kvm -cpu host
 OBJDUMP := rust-objdump -print-imm-hex -x86-asm-syntax=intel
 
 
@@ -19,7 +20,9 @@ run: build ${CODE_FD}
 	mkdir -p $(ESP)/EFI/Boot
 	cp $(EFI) $(ESP)/EFI/Boot/BootX64.efi
 	echo 'EFI\\Boot\\BootX64.efi' > $(ESP)/startup.nsh
-	qemu-system-x86_64 \
+	qemu-system-riscv64 \
+		-machine virt -cpu rv64,x-h=true\
+		-nographic \
 		-bios ${OVMF} \
 		-drive format=raw,file=fat:rw:${ESP} \
 		$(QEMU_ARGS)

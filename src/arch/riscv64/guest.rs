@@ -1,3 +1,11 @@
+use alloc::sync::Arc;
+
+use crate::memory::{GuestPhysMemorySetTrait,};
+
+use crate::{
+    RvmResult,
+};
+
 pub struct Guest {
 
 }
