@@ -1,9 +1,13 @@
 #![allow(clippy::unnecessary_wraps)]
 
+mod bits;
+mod csr;
 mod ept;
 mod guest;
 mod vcpu;
-
+mod config;
+#[macro_use]
+mod instructions;
 
 pub use ept::EPageTable as ArchRvmPageTable;
 pub use guest::Guest;
@@ -24,5 +28,15 @@ pub fn check_hypervisor_feature() -> bool {
     // }else{
     //     info!("error");
     // }
+    true
+}
+
+pub fn test_instructions() -> bool {
+    //STORE	ra, (RVMSTATE_HOST_RA)(a0)
+    // load!(ra,)
+    let a = "3";
+    let sp = "sp";
+    let ra = "ra";
+    info!("{}",load_instruction_and_format!(ra,a,sp));
     true
 }

@@ -339,6 +339,7 @@ impl Vcpu {
         Ok(())
     }
 
+    //todo 入口地址
     /// Setup VMCS guest state.
     unsafe fn init_vmcs_guest(&self, vmcs: &mut AutoVmcs, entry: u64) -> RvmResult {
         // Setup PAT & EFER

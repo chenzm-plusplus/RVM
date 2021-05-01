@@ -1,5 +1,67 @@
 
-use crate::riscv::bits::STATUS_FS;
+use super::bits::STATUS_FS;
+
+/*
+llvm_asm!(assembly template
+   : output operands
+   : input operands
+   : clobbers
+   : options
+   );
+*/
+/*
+.macro STORE reg, offset, regbytes, base
+    sd  \reg, \offset*REGBYTES(a0)
+.macro LOAD reg, offset, regbytes, base
+    ld  \reg, \offset*REGBYTES(a0)
+*/
+/// atomic read
+
+#[macro_export]
+macro_rules! load_instruction {
+    ( $regname:ident, $offset:ident, $base:ident) => {
+        concat!("ld ",$regname,", ",$offset, "(", $base, ")")
+    };
+}
+
+#[macro_export]
+macro_rules! load_instruction_and_concat {
+    ( $regname:literal, $offset:literal, $base:literal) => {
+        concat!("ld ",$regname,", ",$offset, "(", $base, ")")
+    };
+}
+
+#[macro_export]
+macro_rules! load_instruction_and_format {
+    ( $regname:expr, $offset:expr, $base:expr) => {
+        format_args!("ld {}, {}({})",$regname,$offset,$base)
+    };
+}
+
+#[macro_export]
+macro_rules! load {
+    ( $regname:ident, $offset:expr, $regbytes:expr, $base:ident) => {{
+        let value: u64;
+        #[allow(unused_unsafe)]
+        unsafe { llvm_asm!(
+            concat!("ld ",$regname,", ",offset*regbytes, "(", $base, ")")
+            : "=r"(value) 
+            : 
+        ) };
+        value
+    }};
+}
+
+// /// atomic read from CSR
+// #[macro_export]
+// macro_rules! store {
+//     ( $r:ident ) => {{
+//         let value: u64;
+//         #[allow(unused_unsafe)]
+//         unsafe { llvm_asm!("sd $0, $1" : "=r"(value) : "i"(super::csr::$r)) };
+//         value
+//     }};
+// }
 
 /// atomic read from CSR
 #[macro_export]
@@ -7,7 +69,7 @@ macro_rules! csrr {
     ( $r:ident ) => {{
         let value: u64;
         #[allow(unused_unsafe)]
-        unsafe { asm!("csrr $0, $1" : "=r"(value) : "i"(crate::riscv::csr::$r)) };
+        unsafe { llvm_asm!("csrr $0, $1" : "=r"(value) : "i"(super::csr::$r)) };
         value
     }};
 }
@@ -17,7 +79,7 @@ macro_rules! csrr {
 macro_rules! csrw {
     ( $r:ident, $x:expr ) => {{
         let x: u64 = $x;
-        asm!("csrw $0, $1" :: "i"(crate::riscv::csr::$r), "r"(x) :: "volatile");
+        llvm_asm!("csrw $0, $1" :: "i"(super::csr::$r), "r"(x) :: "volatile");
     }};
 }
 
@@ -26,7 +88,7 @@ macro_rules! csrw {
 macro_rules! csrwi {
     ( $r:ident, $x:expr ) => {{
         const X: u64 = $x;
-        asm!("csrwi $0, $1" :: "i"(crate::riscv::csr::$r), "i"(X) :: "volatile");
+        llvm_asm!("csrwi $0, $1" :: "i"(super::csr::$r), "i"(X) :: "volatile");
     }};
 }
 
@@ -35,7 +97,7 @@ macro_rules! csrwi {
 macro_rules! csrs {
     ( $r:ident, $x:expr ) => {{
         let x: u64 = $x;
-        asm!("csrs $0, $1" :: "i"(crate::riscv::csr::$r), "r"(x) :: "volatile");
+        llvm_asm!("csrs $0, $1" :: "i"(super::csr::$r), "r"(x) :: "volatile");
     }};
 }
 
@@ -44,7 +106,7 @@ macro_rules! csrs {
 macro_rules! csrsi {
     ( $r:ident, $x:expr ) => {{
         const X: u64 = $x;
-        asm!("csrsi $0, $1" :: "i"(crate::riscv::csr::$r), "i"(X) :: "volatile");
+        llvm_asm!("csrsi $0, $1" :: "i"(super::csr::$r), "i"(X) :: "volatile");
     }};
 }
 
@@ -53,7 +115,7 @@ macro_rules! csrsi {
 macro_rules! csrc {
     ( $r:ident, $x:expr ) => {{
         let x: u64 = $x;
-        asm!("csrc $0, $1" :: "i"(crate::riscv::csr::$r), "r"(x) :: "volatile");
+        llvm_asm!("csrc $0, $1" :: "i"(super::csr::$r), "r"(x) :: "volatile");
     }};
 }
 
@@ -62,28 +124,28 @@ macro_rules! csrc {
 macro_rules! csrci {
     ( $r:ident, $x:expr ) => {{
         const X: u64 = $x;
-        asm!("csrci $0, $1" :: "i"(crate::riscv::csr::$r), "i"(X) :: "volatile");
+        llvm_asm!("csrci $0, $1" :: "i"(super::csr::$r), "i"(X) :: "volatile");
     }};
 }
 
 pub fn sfence_vma() {
-    unsafe { asm!("sfence.vma" ::: "memory" : "volatile") }
+    unsafe { llvm_asm!("sfence.vma" ::: "memory" : "volatile") }
 }
 
 pub fn sfence_vma_addr(vaddr: u64) {
-    unsafe { asm!("sfence.vma $0" :: "r"(vaddr) : "memory" : "volatile") }
+    unsafe { llvm_asm!("sfence.vma $0" :: "r"(vaddr) : "memory" : "volatile") }
 }
 
 pub fn barrier() {
-    unsafe { asm!("" ::: "memory" : "volatile") }
+    unsafe { llvm_asm!("" ::: "memory" : "volatile") }
 }
 
 pub fn fence_i() {
-    unsafe { asm!("fence.i" :::: "volatile") }
+    unsafe { llvm_asm!("fence.i" :::: "volatile") }
 }
 
 pub fn wfi() {
-    unsafe { asm!("wfi" :::: "volatile") }
+    unsafe { llvm_asm!("wfi" :::: "volatile") }
 }
 
 /// Set the `sepc` CSR to the indicated value.
