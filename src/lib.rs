@@ -22,7 +22,7 @@ mod arch;
 mod arch;
 
 mod interrupt;//trap_map
-mod memory;//dummy,ffi
+pub mod memory;//dummy,ffi
 mod packet;
 mod config;
 
