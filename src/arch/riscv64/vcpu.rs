@@ -6,11 +6,8 @@ use alloc::{
     sync::Arc,
 };
 
-use crate::{
-    RvmResult,
-};
-
 use super::config::*;
+use crate::{packet::RvmExitPacket, RvmError, RvmResult, VcpuIo, VcpuState};
 
 //===================================================================================
 
@@ -191,6 +188,45 @@ impl Vcpu{
         Ok(())
     }
     //todo : resume
+
+	pub fn resume(&mut self) -> RvmResult<RvmExitPacket> {
+        // loop {
+        //     let mut vmcs = AutoVmcs::new(self.vmcs_page.phys_addr())?;
+
+        //     self.interrupt_state.try_inject_interrupt(&mut vmcs)?;
+        //     // TODO: save/restore guest extended registers (x87/SSE)
+
+        //     // VM Entry
+        //     self.running.store(true, Ordering::SeqCst);
+        //     trace!("[RVM] vmx entry");
+        //     let has_err = unsafe { vmx_entry(&mut self.vmx_state) };
+        //     trace!("[RVM] vmx exit");
+        //     self.running.store(false, Ordering::SeqCst);
+
+        //     if has_err {
+        //         warn!(
+        //             "[RVM] VCPU resume failed: {:?}",
+        //             VmInstructionError::from(vmcs.read32(VM_INSTRUCTION_ERROR))
+        //         );
+        //         return Err(RvmError::Internal);
+        //     }
+
+        //     // VM Exit
+        //     self.vmx_state.resume = true;
+        //     match vmexit_handler(
+        //         &mut vmcs,
+        //         &mut self.vmx_state.guest_state,
+        //         &mut self.interrupt_state,
+        //         &self.guest.gpm,
+        //         &self.guest.traps,
+        //     )? {
+        //         Some(packet) => return Ok(packet), // forward to user mode handler
+        //         None => continue,
+        //     }
+        // }
+		Err(RvmError::NotFound)
+    }
+
 
 }
 

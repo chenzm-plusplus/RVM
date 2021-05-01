@@ -30,7 +30,7 @@ mod config;
 pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu};
 
 #[cfg(target_arch = "riscv64")]
-pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu};
+pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu, test_instructions};
 
 pub use memory::dummy::{DefaultGuestPhysMemorySet, GuestMemoryAttr};
 pub use memory::*;
