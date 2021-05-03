@@ -54,6 +54,7 @@ pub enum RvmError {
     OutOfRange,
     BadState,
     NotFound,
+    Success,
 }
 
 use numeric_enum_macro::numeric_enum;

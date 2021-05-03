@@ -227,8 +227,8 @@ impl InterruptState {
 /// Represents a virtual CPU within a guest.
 pub struct Vcpu {
     vpid: u16,
-    guest: Arc<Guest>,//自己对应的Guest要保存起来方便找
-    running: AtomicBool,//
+    guest: Arc<Guest>,//
+    running: AtomicBool,//好像是一个用来标识自己是不是正在跑的bool。atomic就是可以安全地在不同线程下跑（这么高级啊）
     vmx_state: Pin<Box<VmxState>>,//？
     vmcs_page: VmxPage,//？？？
     host_msr_list: MsrList,//？？？
