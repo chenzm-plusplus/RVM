@@ -9,6 +9,7 @@
 //这段可以直接抄，但是不知道怎么用汇编传递常量orz
     .section .text
     .global __riscv64_entry
+	.align 4
 __riscv64_entry:
     // 把 Host的寄存器保存在用户栈上
     // 准备进入guest os
@@ -17,28 +18,29 @@ __riscv64_entry:
 	//a0是函数参数，我觉得调用参数的时候或许应该传入地址(??)
 	/* Save Host GPRs (except A0 and T0-T6) */
 	sd  ra, 8(a0)
-    # sd  sp, 16(a0)
-    # sd  gp, 24(a0)
-    # sd  tp, 32(a0)
-    # sd  s0, 40(a0)
-    # sd  s1, 48(a0)
-    # sd  a1, 64(a0)
-    # sd  a2, 72(a0)
-    # sd  a3, 80(a0)
-    # sd  a4, 88(a0)
-    # sd  a5, 96(a0)
-    # sd  a6, 104(a0)
-    # sd  a7, 112(a0)
-    # sd  s2, 120(a0)
-    # sd  s3, 128(a0)
-    # sd  s4, 136(a0)
-    # sd  s5, 144(a0)
-    # sd  s6, 152(a0)
-    # sd  s7, 160(a0)
-    # sd  s8, 168(a0)
-    # sd  s9, 176(a0)
-    # sd  s10, 184(a0)
-    # sd  s11, 192(a0)
+    sd  sp, 16(a0)
+    sd  gp, 24(a0)
+    sd  tp, 32(a0)
+	sd  s0, 40(a0)
+    sd  s1, 48(a0)
+    sd  a1, 64(a0)
+    sd  a2, 72(a0)
+    sd  a3, 80(a0)
+    sd  a4, 88(a0)
+    sd  a5, 96(a0)
+
+    sd  a6, 104(a0)
+    sd  a7, 112(a0)
+    sd  s2, 120(a0)
+    sd  s3, 128(a0)
+    sd  s4, 136(a0)
+    sd  s5, 144(a0)
+    sd  s6, 152(a0)
+    sd  s7, 160(a0)
+    sd  s8, 168(a0)
+    sd  s9, 176(a0)
+    sd  s10, 184(a0)
+    sd  s11, 192(a0)
 
     /* Save Host and Restore Guest SSTATUS */
     ld  t0, 0x200(a0)	#guest sstatus
@@ -60,9 +62,14 @@ __riscv64_entry:
     sd  t3, 224(a0)
 
     /* Save Host STVEC and change it to return path */
-	la	t4, __riscv64_exit	#就是说
-	csrrw	t4, 0x105, t4
+	la	t5, __riscv64_exit	#就是说
+	# csrrw	t4, 0x105, t5
+	csrr	t4, 0x105
+	csrw	0x105, t5
     sd  t4, 0xe8(a0)	#host stvec 232
+
+	#ATTENTION
+
 
 	/* Restore Guest SEPC */
 	ld	t0, 504(a0)
@@ -106,7 +113,8 @@ __riscv64_entry:
 	/* Resume Guest */
 	sret
 
-.global __riscv64_exit
+	.global __riscv64_exit
+	.align 4
 __riscv64_exit:
     // Store the guest registers not covered by the VMCS. At this point,
     // 
@@ -188,28 +196,29 @@ __riscv64_exit:
 
 	# # /* Restore Host GPRs (except A0 and T0-T6) */
 	ld      ra, 8(a0)
-	# ld      sp, 16(a0)
-	# ld      gp, 24(a0)
-	# ld      tp, 32(a0)
-	# ld      s0, 40(a0)
-	# ld      s1, 48(a0)
-	# ld      a1, 64(a0)
-	# ld      a2, 72(a0)
-	# ld      a3, 80(a0)
-	# ld      a4, 88(a0)
-	# ld      a5, 96(a0)
-	# ld      a6, 104(a0)
-	# ld      a7, 112(a0)
-	# ld      s2, 120(a0)
-	# ld      s3, 128(a0)
-	# ld      s4, 136(a0)
-	# ld      s5, 144(a0)
-	# ld      s6, 152(a0)
-	# ld      s7, 160(a0)
-	# ld      s8, 168(a0)
-	# ld      s9, 176(a0)
-	# ld      s10, 184(a0)
-	# ld      s11, 192(a0)
+
+	ld      sp, 16(a0)
+	ld      gp, 24(a0)
+	ld      tp, 32(a0)
+	ld      s0, 40(a0)
+	ld      s1, 48(a0)
+	ld      a1, 64(a0)
+	ld      a2, 72(a0)
+	ld      a3, 80(a0)
+	ld      a4, 88(a0)
+	ld      a5, 96(a0)
+	ld      a6, 104(a0)
+	ld      a7, 112(a0)
+	ld      s2, 120(a0)
+	ld      s3, 128(a0)
+	ld      s4, 136(a0)
+	ld      s5, 144(a0)
+	ld      s6, 152(a0)
+	ld      s7, 160(a0)
+	ld      s8, 168(a0)
+	ld      s9, 176(a0)
+	ld      s10, 184(a0)
+	ld      s11, 192(a0)
 
 	/* Return to C code */
 	ret	
