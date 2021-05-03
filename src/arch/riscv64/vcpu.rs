@@ -137,6 +137,7 @@ pub struct RvmStateRiscv64 {
 unsafe extern "C" 
     fn test_switch(){
         info!("[RVM] switch entry success!");
+		__test();
     }
 
 impl Vcpu{
@@ -164,7 +165,7 @@ impl Vcpu{
 
 		// VM Entry
 		self.running.store(true, Ordering::SeqCst);
-		unsafe{test_switch();}
+		
 		// sstatus::
 		//测试一下！
 		self.rvmstate_riscv64.guest_state.sepc = test_switch as u64;
@@ -178,15 +179,16 @@ impl Vcpu{
 		trace!("[RVM] guest_sepc address is {:#x}",&self.rvmstate_riscv64.host_state.zero as *const _ as u64 + 504);
 		let guest_sepc_address = &self.rvmstate_riscv64.guest_state.sepc as *const _ as u64;
 		let guest_sstatus_address = &self.rvmstate_riscv64.guest_state.sstatus as *const _ as u64;
-		let host_sstatus_address = &self.rvmstate_riscv64.host_state.sstatus as *const _ as u64;
+		let host_stvec_address = &self.rvmstate_riscv64.host_state.stvec as *const _ as u64;
 		info!("[RVM] rvmstate_riscv64 address is {:#x}",rvmstate_riscv64_address);
-		info!("[RVM] host_sstatus address is {:#x}",host_sstatus_address);
+		info!("[RVM] host_stvec address is {:#x}",host_stvec_address);
 		info!("[RVM] guest_sstatus address is {:#x}",guest_sstatus_address);
-		info!("[RVM] guest_sstatus offset is {}, {:#x}",guest_sstatus_address-rvmstate_riscv64_address,guest_sstatus_address-rvmstate_riscv64_address);
+		info!("[RVM] host_stvec offset is {}, {:#x}",host_stvec_address-rvmstate_riscv64_address,host_stvec_address-rvmstate_riscv64_address);
 		// info!("[RVM] host_sstatus is {:#x}",sstatus::read());
 		unsafe{trace!("[RVM] guest_sepc is {:#x}",*((&self.rvmstate_riscv64.host_state.zero as *const _ as u64 + 504) as *const u64));}
 		trace!("[RVM] test_switch is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
 
+		//todo: check ra value
 		let has_err = unsafe { __riscv64_entry(&mut self.rvmstate_riscv64) };
 
 		info!("[RVM] riscv64 exit");
@@ -249,7 +251,6 @@ impl Vcpu{
         //         None => continue,
         //     }
         // }
-		Err(RvmError::NotFound)
     }
 }
 
@@ -262,4 +263,5 @@ extern "C" {
     /// VM exit, vmx_state argument is stored in RSP. We use this to restore the
     /// stack and registers to the state they were in when vmx_entry was called.
     fn __riscv64_exit() -> bool;
+	fn __test();
 }

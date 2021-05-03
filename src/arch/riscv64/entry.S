@@ -16,7 +16,7 @@ __riscv64_entry:
 	//a0是函数参数
 	//a0是函数参数，我觉得调用参数的时候或许应该传入地址(??)
 	/* Save Host GPRs (except A0 and T0-T6) */
-	# sd  ra, 8(a0)
+	sd  ra, 8(a0)
     # sd  sp, 16(a0)
     # sd  gp, 24(a0)
     # sd  tp, 32(a0)
@@ -56,13 +56,13 @@ __riscv64_entry:
     # sd  t2, 240(a0)
 
     /* Save Host SSCRATCH and change it to struct kvm_vcpu_arch pointer */
-	# csrrw	t3, 0x140, a0
-    # sd  t3, 224(a0)
+	csrrw	t3, 0x140, a0
+    sd  t3, 224(a0)
 
     /* Save Host STVEC and change it to return path */
-	# la	t4, __riscv64_exit
-	# csrrw	t4, 0x105, t4
-    # sd  t4, 232(a0)
+	la	t4, __riscv64_exit	#就是说
+	csrrw	t4, 0x105, t4
+    sd  t4, 0xe8(a0)	#host stvec 232
 
 	/* Restore Guest SEPC */
 	ld	t0, 504(a0)
@@ -101,7 +101,7 @@ __riscv64_entry:
     # ld  t6, 496(a0)
 
 	/* Restore Guest A0 */
-	# ld  a0, 328(a0)
+	ld  a0, 328(a0)
 
 	/* Resume Guest */
 	sret
@@ -111,7 +111,7 @@ __riscv64_exit:
     // Store the guest registers not covered by the VMCS. At this point,
     // 
     /* Swap Guest A0 with b  */
-	# csrrw   a0, 0x140, a0
+	csrrw   a0, 0x140, a0
 
 	# /* Save Guest GPRs (except A0) */
 	# sd      ra, 256(a0)
@@ -187,7 +187,7 @@ __riscv64_exit:
 	sd      t5, 512(a0)	#guest sstatus
 
 	# # /* Restore Host GPRs (except A0 and T0-T6) */
-	# ld      ra, 8(a0)
+	ld      ra, 8(a0)
 	# ld      sp, 16(a0)
 	# ld      gp, 24(a0)
 	# ld      tp, 32(a0)
@@ -212,4 +212,12 @@ __riscv64_exit:
 	# ld      s11, 192(a0)
 
 	/* Return to C code */
-	ret
+	ret	
+	#jalr	x0, 0(x1)
+	#x0 是zero， x1是ra（return address）
+
+.global __test
+__test:
+	# ebreak
+	li t6,0x80000000
+	ld x0,0(t6)
