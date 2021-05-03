@@ -12,6 +12,8 @@
 extern crate alloc;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate memoffset;
 
 #[cfg(target_arch = "x86_64")]
 #[path = "arch/x86_64/mod.rs"]
@@ -30,7 +32,7 @@ mod config;
 pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu};
 
 #[cfg(target_arch = "riscv64")]
-pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu, test_instructions};
+pub use arch::{check_hypervisor_feature, ArchRvmPageTable, Guest, Vcpu, test_instructions, generate_switch_entry};
 
 pub use memory::dummy::{DefaultGuestPhysMemorySet, GuestMemoryAttr};
 pub use memory::*;

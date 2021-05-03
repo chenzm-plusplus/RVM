@@ -9,6 +9,8 @@ use alloc::{
 use super::config::*;
 use crate::{packet::RvmExitPacket, RvmError, RvmResult, VcpuIo, VcpuState};
 
+use super::regs::*;
+
 //===================================================================================
 
 /// Represents a virtual CPU within a guest.
@@ -73,8 +75,8 @@ pub struct CPUCsr{
 }
 
 /// Holds the register state used to restore a guest.
-#[repr(C)]
-#[derive(Debug, Default, Clone)]
+#[repr(C,packed)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct GuestState {
 	pub zero : u64,//0
 	pub ra : u64,//1
@@ -117,8 +119,8 @@ pub struct GuestState {
 
 // 
 /// Holds the register state used to restore a guest.
-#[repr(C)]
-#[derive(Debug, Default, Clone)]
+#[repr(C,packed)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct HostState {
 	pub zero : u64,//0
 	pub ra : u64,//1
@@ -157,9 +159,9 @@ pub struct HostState {
 
 /// Host and guest cpu register states.
 /// [WARN]修改布局会导致汇编代码出错
-#[repr(C)]
-#[derive(Debug, Default)]
-struct RvmStateRiscv64 {
+#[repr(C,packed)]
+#[derive(Debug, Default, Clone, Copy)]
+pub struct RvmStateRiscv64 {
 	// //host
     // host_context: CPUContext,//0~34
 	// host_sscratch: u64,//35

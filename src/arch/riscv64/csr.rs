@@ -206,6 +206,7 @@ pub const mhpmevent28: u64 = 0x33c;
 pub const mhpmevent29: u64 = 0x33d;
 pub const mhpmevent30: u64 = 0x33e;
 pub const mhpmevent31: u64 = 0x33f;
+pub const hstatus: u64 = 0x600;
 pub const mhpmcounter3h: u64 = 0xb83;
 pub const mhpmcounter4h: u64 = 0xb84;
 pub const mhpmcounter5h: u64 = 0xb85;

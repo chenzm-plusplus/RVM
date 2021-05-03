@@ -18,35 +18,50 @@ llvm_asm!(assembly template
 /// atomic read
 
 #[macro_export]
-macro_rules! load_instruction {
-    ( $regname:ident, $offset:ident, $base:ident) => {
-        concat!("ld ",$regname,", ",$offset, "(", $base, ")")
-    };
-}
-
-#[macro_export]
-macro_rules! load_instruction_and_concat {
-    ( $regname:literal, $offset:literal, $base:literal) => {
-        concat!("ld ",$regname,", ",$offset, "(", $base, ")")
-    };
-}
-
-#[macro_export]
-macro_rules! load_instruction_and_format {
+macro_rules! ld {
     ( $regname:expr, $offset:expr, $base:expr) => {
-        format_args!("ld {}, {}({})",$regname,$offset,$base)
+        format_args!("ld\t{}, {}({})",$regname,$offset,$base)
+    };
+}
+
+#[macro_export]
+macro_rules! sd {
+    ( $regname:expr, $offset:expr, $base:expr) => {
+        format_args!("sd\t{}, {}({})",$regname,$offset,$base)
+    };
+}
+
+// #[macro_export]
+// macro_rules! csrrw {
+//     ( $regname:expr, $offset:expr, $base:expr) => {
+//         format_args!("csrrw\t{}, {}, {}",$regname,$offset,$base)
+//     };
+// }
+
+// #[macro_export]
+// macro_rules! csrw {
+//     ( $offset:expr, $regname:expr) => {
+//         format_args!("csrrw\t{}, {}",$offset,$regname)
+//     };
+// }
+
+#[macro_export]
+macro_rules! la {
+    ( $offset:expr, $regname:literal) => {
+        format_args!("la\t{}, {}",$offset,$regname)
     };
 }
 
 #[macro_export]
 macro_rules! load {
-    ( $regname:ident, $offset:expr, $regbytes:expr, $base:ident) => {{
+    ( $regname:expr, $offset:expr, $base:expr) => {{
         let value: u64;
         #[allow(unused_unsafe)]
         unsafe { llvm_asm!(
-            concat!("ld ",$regname,", ",offset*regbytes, "(", $base, ")")
-            : "=r"(value) 
-            : 
+            "ld $0, $1($2)"
+            :"=r"(value)
+            :"i"($regname), "i"($offset), "i"($base)
+            :
         ) };
         value
     }};
@@ -64,6 +79,19 @@ macro_rules! load {
 // }
 
 /// atomic read from CSR
+// #[macro_export]
+// macro_rules! load {
+//     ( $loadto:ident, $offset:expr, ) => {{
+//         let value: u64;
+//         #[allow(unused_unsafe)]
+//         unsafe { llvm_asm!("ld $0, $1($2)" 
+//         : "=r"(value) 
+//         : "r"(super::csr::$loadto), "i"()) };
+//         value
+//     }};
+// }
+
+/// atomic read from CSR
 #[macro_export]
 macro_rules! csrr {
     ( $r:ident ) => {{
@@ -74,7 +102,7 @@ macro_rules! csrr {
     }};
 }
 
-/// atomic write to CSR
+// / atomic write to CSR
 #[macro_export]
 macro_rules! csrw {
     ( $r:ident, $x:expr ) => {{
