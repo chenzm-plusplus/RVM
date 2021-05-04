@@ -11,8 +11,6 @@ mod instructions;
 mod regs;
 mod test;
 
-use test::*;
-
 use regs::*;
 pub use instructions::*;
 

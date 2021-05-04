@@ -44,9 +44,9 @@ __riscv64_entry:
     sd  s11, 192(a0)
 
     /* Save Host and Restore Guest SSTATUS */
-    ld  t0, 0x200(a0)	#guest sstatus
+    ld  t0, 0x200(a0)	#guest sstatus  512
     csrrw	t0, 0x100, t0
-    sd  t0, 0xd0(a0)	#host sstatus
+    sd  t0, 0xd0(a0)	#host sstatus  208
 
     /* Save Host and Restore Guest HSTATUS */
     # ld  t1, 296(a0)
@@ -54,11 +54,11 @@ __riscv64_entry:
     # sd  t1, 216(a0)
 
     /* Save Host and Restore Guest SCOUNTEREN */
-    # ld  t2, 304(a0)
-    # csrrw	t2, 0x106, t2
-    # sd  t2, 240(a0)
+    ld  t2, 0x210(a0) #528, 0x210
+    csrrw	t2, 0x106, t2
+    sd  t2, 0xf0(a0)  #240, 0xf0
 
-    /* Save Host SSCRATCH and change it to struct kvm_vcpu_arch pointer */
+    /* Save Host SSCRATCH and change it to struct rvm_vcpu_arch pointer */
 	csrrw	t3, 0x140, a0
     sd  t3, 224(a0)
 
@@ -75,10 +75,12 @@ __riscv64_entry:
 
 	/* Restore Guest GPRs (except A0) */
 	// 在初始情况下这些应该都是0
-    ld  ra, 256(a0)
-    ld  sp, 264(a0)
-    ld  gp, 272(a0)
-    ld  tp, 280(a0)
+	// 如果是去跳到一个普通的OS那里大概是应该这样
+	// 但是现在在测试阶段，也就是说有些寄存器是0可能就会出问题
+    # ld  ra, 256(a0)
+    # ld  sp, 264(a0)
+    # ld  gp, 272(a0)
+    # ld  tp, 280(a0)
     ld  t0, 288(a0)
     ld  t1, 296(a0)
     ld  t2, 304(a0)
@@ -103,7 +105,7 @@ __riscv64_entry:
     ld  s11, 464(a0)
     ld  t3, 472(a0)
     ld  t4, 480(a0)
-    ld  t5, 488(a0)
+    ld 	t5, 488(a0)
     ld  t6, 496(a0)
 
 	/* Restore Guest A0 */
@@ -117,8 +119,11 @@ __riscv64_entry:
 __riscv64_exit:
     // Store the guest registers not covered by the VMCS. At this point,
     // 
-    /* Swap Guest A0 with b  */
+    /* Swap Guest A0 with SSCRATCH  */
 	csrrw   a0, 0x140, a0
+	// 把sscratch里存的和a0交换位置
+	// sscratch里存的应该是struct rvm_vcpu_arch pointer
+	// 那么这里的a0就是正确的a0
 
 	# /* Save Guest GPRs (except A0) */
 	sd      ra, 256(a0)
@@ -167,17 +172,19 @@ __riscv64_exit:
 	# # LOAD	t2, (RVMSTORE_HOST_SSCRATCH)(a0)
 	# # csrrw	t2, CSR_SSCRATCH, t2
 	# # STORE	t2, (RVMSTORE_GUEST_A0)(a0)
-	# ld      t2, 224(a0)
-	# csrrw   t2, 0x140, t2
-	# sd      t2, 328(a0)
+	// 注意guest a0存在当前的sscratch里，所以这里把当前的sscratch存到guest a0的位置
+	// sscratch的值变成了之前存储的host sscratch的值
+	ld      t2, 224(a0)
+	csrrw   t2, 0x140, t2
+	sd      t2, 328(a0)
 
 	# # /* Save Guest and Restore Host SCOUNTEREN */
 	# # LOAD	t3, (RVMSTORE_HOST_SCOUNTEREN)(a0)
 	# # csrrw	t3, CSR_SCOUNTEREN, t3
 	# # STORE	t3, (RVMSTORE_GUEST_SCOUNTEREN)(a0)
-	# ld      t3, 240(a0)
-	# csrrw   t3, 0x106, t3
-	# sd      t3, 528(a0)
+	ld      t3, 240(a0) #0xf0
+	csrrw   t3, 0x106, t3
+	sd      t3, 528(a0) #0x210
 
 	# # /* Save Guest and Restore Host HSTATUS */
 	# # LOAD	t4, (RVMSTORE_HOST_HSTATUS)(a0)
@@ -222,9 +229,3 @@ __riscv64_exit:
 	ret	
 	# jalr	x0, 0(x1)
 	# x0 是zero， x1是ra（return address）
-
-.global __test
-__test:
-	# ebreak
-	li t6,0x80000000
-	ld x0,0(t6)

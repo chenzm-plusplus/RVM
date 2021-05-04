@@ -121,9 +121,52 @@ pub struct GuestState {
 	pub sepc : u64,//32
 	pub sstatus : u64,//33
 	pub hstatus : u64,//34
-	pub scounteren: u64,//35
+	pub scounteren : u64,//35
 }
-
+/*
+impl fmt::Debug for GuestState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("GuestState")
+		 .field("zero", &self.zero)//0
+		 .field("ra", &self.ra)//1
+		 .field("sp", &self.sp)//2
+		 .field("gp", &self.gp)//3
+		 .field("tp", &self.tp)//4
+		 .field("t0", &self.t0)//5
+		 .field("t1", &self.t1)//6
+		 .field("t2", &self.t2)//7
+		 .field("s0", &self.s0)//8
+		 .field("s1", &self.s1)//9
+		 .field("a0", &self.a0)//10
+		 .field("a1", &self.a1)//11
+		 .field("a2", &self.a2)//12
+		 .field("a3", &self.a3)//13
+		 .field("a4", &self.a4)//14
+		 .field("a5", &self.a5)//15
+		 .field("a6", &self.a6)//16
+		 .field("a7", &self.a7)//17
+		 .field("s2", &self.s2)//18
+		 .field("s3", &self.s3)//19
+		 .field("s4", &self.s4)//20
+		 .field("s5", &self.s5)//21
+		 .field("s6", &self.s6)//22
+		 .field("s7", &self.s7)//23
+		 .field("s8", &self.s8)//24
+		 .field("s9", &self.s9)//25
+		 .field("s10", &self.s10)//26
+		 .field("s11", &self.s11)//27
+		 .field("t3", &self.t3)//28
+		 .field("t4", &self.t4)//29
+		 .field("t5", &self.t5)//30
+		 .field("t6", &self.t6)//31
+		 .field("sepc", &self.sepc)//32
+		 .field("sstatus", &self.sstatus)//33
+		 .field("hstatus", &self.hstatus)//34
+		 .field("scounteren",&self.scounteren)//35
+         .finish()
+    }
+}
+*/
 /// Host and guest cpu register states.
 /// [WARN]修改布局会导致汇编代码出错
 #[repr(C,packed)]
@@ -137,6 +180,7 @@ pub struct RvmStateRiscv64 {
 unsafe extern "C" 
     fn test_switch(){
         info!("[RVM] switch entry success!");
+		__test_write_general_registers();
 		__test();
     }
 
@@ -155,7 +199,7 @@ impl Vcpu{
 
         Ok(vcpu)
     }
-	
+
 	fn init(&mut self, entry: u64) -> RvmResult {
         Ok(())
     }
@@ -170,19 +214,30 @@ impl Vcpu{
 		self.rvmstate_riscv64.guest_state.sstatus = 0x8000000000006100 as u64; 
 		//这里需要设置SEIP=1，表示在trap之前处于S态。否则在entry的最后一行执行sret就会跳到U态，权限就不对了QAQ
 
+		debug!("[RVM] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
+		debug!("[RVM] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
+
+		// self.rvmstate_riscv64.guest_state.scounteren = 0x1 as u64;
+
+		//todo:检查guest的通用寄存器是否保存正确
+
 		info!("[RVM] riscv64 entry");
 
-		//test
+		//trace
 		let rvmstate_riscv64_address = &self.rvmstate_riscv64.host_state.zero as *const _ as u64;
 		trace!("[RVM] a0 is {:#x}",&self.rvmstate_riscv64.host_state.a0 as *const _ as u64);
 		trace!("[RVM] guest_sepc address is {:#x}",&self.rvmstate_riscv64.host_state.zero as *const _ as u64 + 504);
 		let guest_sepc_address = &self.rvmstate_riscv64.guest_state.sepc as *const _ as u64;
 		let guest_sstatus_address = &self.rvmstate_riscv64.guest_state.sstatus as *const _ as u64;
+		let host_scounteren_address = &self.rvmstate_riscv64.host_state.scounteren as *const _ as u64;
+		let guest_scounteren_address = &self.rvmstate_riscv64.guest_state.scounteren as *const _ as u64;
 		let host_stvec_address = &self.rvmstate_riscv64.host_state.stvec as *const _ as u64;
-		info!("[RVM] rvmstate_riscv64 address is {:#x}",rvmstate_riscv64_address);
-		info!("[RVM] host_stvec address is {:#x}",host_stvec_address);
-		info!("[RVM] guest_sstatus address is {:#x}",guest_sstatus_address);
-		info!("[RVM] host_stvec offset is {}, {:#x}",host_stvec_address-rvmstate_riscv64_address,host_stvec_address-rvmstate_riscv64_address);
+		trace!("[RVM] rvmstate_riscv64 address is {:#x}",rvmstate_riscv64_address);
+		trace!("[RVM] host_stvec address is {:#x}",host_stvec_address);
+		trace!("[RVM] guest_sstatus address is {:#x}",guest_sstatus_address);
+		trace!("[RVM] host_stvec offset is {}, {:#x}",host_stvec_address-rvmstate_riscv64_address,host_stvec_address-rvmstate_riscv64_address);
+		info!("[RVM] host_scounteren offset is {}, {:#x}",host_scounteren_address-rvmstate_riscv64_address,host_scounteren_address-rvmstate_riscv64_address);
+		info!("[RVM] guest_scounteren offset is {}, {:#x}",guest_scounteren_address-rvmstate_riscv64_address,guest_scounteren_address-rvmstate_riscv64_address);
 		// info!("[RVM] host_sstatus is {:#x}",sstatus::read());
 		unsafe{trace!("[RVM] guest_sepc is {:#x}",*((&self.rvmstate_riscv64.host_state.zero as *const _ as u64 + 504) as *const u64));}
 		trace!("[RVM] test_switch is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
@@ -191,7 +246,10 @@ impl Vcpu{
 
 		info!("[RVM] riscv64 exit");
 
-		//todo：需要知道是否要在进入guestos之前把寄存器初始化为特定的值。
+		debug!("[RVM] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
+		debug!("[RVM] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
+
+		//需要知道是否要在进入guestos之前把寄存器初始化为特定的值。
 		//通用寄存器似乎不用
 		//需要改哪些特权寄存器？
 
@@ -247,6 +305,7 @@ impl Vcpu{
 }
 
 global_asm!(include_str!("entry.S"));
+global_asm!(include_str!("entrytest.S"));
 
 extern "C" {
     //todo怎么把这里改成地址
@@ -256,4 +315,5 @@ extern "C" {
     /// stack and registers to the state they were in when vmx_entry was called.
     fn __riscv64_exit() -> bool;
 	fn __test();
+	fn __test_write_general_registers();
 }
