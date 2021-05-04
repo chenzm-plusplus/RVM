@@ -5,9 +5,9 @@
 .macro LOAD reg, offset
     ld  \reg, \offset*REGBYTES(a0)
 .endm
-//todo: rust汇编传递常量 error:还是手写了
-//这段可以直接抄，但是不知道怎么用汇编传递常量orz
-//
+
+//rust汇编传递常量 error:手写了
+
     .section .text
     .global __riscv64_entry
 	.align 4
@@ -15,8 +15,7 @@ __riscv64_entry:
     // 把 Host的寄存器保存在用户栈上
     // 准备进入guest os
     /* Save Host GPRs (except A0 and T0-T6) */
-	//a0是函数参数
-	//a0是函数参数，我觉得调用参数的时候或许应该传入地址(??)
+	//a0是函数参数，我觉得调用参数的时候或许应该传入地址
 	/* Save Host GPRs (except A0 and T0-T6) */
 	sd  ra, 8(a0)
 
@@ -48,10 +47,11 @@ __riscv64_entry:
     csrrw	t0, 0x100, t0
     sd  t0, 0xd0(a0)	#host sstatus  208
 
+	//todo: check offset; write hstatus in resume;
     /* Save Host and Restore Guest HSTATUS */
-    # ld  t1, 296(a0)
-    # csrrw	t1, 0x600, t1
-    # sd  t1, 216(a0)
+    ld  t1, 520(a0)
+    csrrw	t1, 0x600, t1
+    sd  t1, 216(a0)
 
     /* Save Host and Restore Guest SCOUNTEREN */
     ld  t2, 0x210(a0) #528, 0x210
@@ -77,6 +77,7 @@ __riscv64_entry:
 	// 在初始情况下这些应该都是0
 	// 如果是去跳到一个普通的OS那里大概是应该这样
 	// 但是现在在测试阶段，也就是说有些寄存器是0可能就会出问题
+	// TODO!
     # ld  ra, 256(a0)
     # ld  sp, 264(a0)
     # ld  gp, 272(a0)
@@ -169,30 +170,24 @@ __riscv64_exit:
 	csrw    0x105, t1
 
 	# # /* Save Guest A0 and Restore Host SSCRATCH */
-	# # LOAD	t2, (RVMSTORE_HOST_SSCRATCH)(a0)
-	# # csrrw	t2, CSR_SSCRATCH, t2
-	# # STORE	t2, (RVMSTORE_GUEST_A0)(a0)
 	// 注意guest a0存在当前的sscratch里，所以这里把当前的sscratch存到guest a0的位置
 	// sscratch的值变成了之前存储的host sscratch的值
-	ld      t2, 224(a0)
+	ld      t2, 224(a0) #host sscratch
 	csrrw   t2, 0x140, t2
-	sd      t2, 328(a0)
+	sd      t2, 328(a0) #guest a0
 
 	# # /* Save Guest and Restore Host SCOUNTEREN */
-	# # LOAD	t3, (RVMSTORE_HOST_SCOUNTEREN)(a0)
-	# # csrrw	t3, CSR_SCOUNTEREN, t3
-	# # STORE	t3, (RVMSTORE_GUEST_SCOUNTEREN)(a0)
-	ld      t3, 240(a0) #0xf0
+	ld      t3, 240(a0) #0xf0 host scounteren
 	csrrw   t3, 0x106, t3
-	sd      t3, 528(a0) #0x210
+	sd      t3, 528(a0) #0x210 guest scounteren
 
 	# # /* Save Guest and Restore Host HSTATUS */
 	# # LOAD	t4, (RVMSTORE_HOST_HSTATUS)(a0)
 	# # csrrw	t4, CSR_HSTATUS, t4
 	# # STORE	t4, (RVMSTORE_GUEST_HSTATUS)(a0)
-	# ld      t4, 216(a0)
-	# csrrw   t4, 0x600, t4
-	# sd      t4, 520(a0)
+	ld      t4, 216(a0)
+	csrrw   t4, 0x600, t4
+	sd      t4, 520(a0)
 
 	# /* Save Guest and Restore Host SSTATUS */
 	ld      t5, 208(a0)	#host sstatus
@@ -227,5 +222,6 @@ __riscv64_exit:
 
 	/* Return to Rust code */
 	ret	
+	# pseudoinstruction
 	# jalr	x0, 0(x1)
-	# x0 是zero， x1是ra（return address）
+	# x0 is zero， x1 is ra（return address）

@@ -179,7 +179,7 @@ pub struct RvmStateRiscv64 {
 #[no_mangle]
 unsafe extern "C" 
     fn test_switch(){
-        info!("[RVM] switch entry success!");
+        // info!("[RVM] switch entry success!");
 		__test_write_general_registers();
 		__test();
     }
@@ -211,8 +211,13 @@ impl Vcpu{
 		self.running.store(true, Ordering::SeqCst);
 		
 		self.rvmstate_riscv64.guest_state.sepc = test_switch as u64;
-		self.rvmstate_riscv64.guest_state.sstatus = 0x8000000000006100 as u64; 
+		self.rvmstate_riscv64.guest_state.sstatus = 0x8000_0000_0000_6100 as u64; 
 		//这里需要设置SEIP=1，表示在trap之前处于S态。否则在entry的最后一行执行sret就会跳到U态，权限就不对了QAQ
+
+		//需要设置hstatus
+		//SPV = 1 : 表示在h态之前V=1，因此执行sret可以进入这个态
+		//SPVP = 1 : V=1时这一位有效，表示S（1）U（0）
+		self.rvmstate_riscv64.guest_state.hstatus = 0x0000_0000_0000_00c0 as u64;
 
 		debug!("[RVM] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
 		debug!("[RVM] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
