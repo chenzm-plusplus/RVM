@@ -5,8 +5,9 @@
 .macro LOAD reg, offset
     ld  \reg, \offset*REGBYTES(a0)
 .endm
-//todo: rust汇编传递常量
+//todo: rust汇编传递常量 error:还是手写了
 //这段可以直接抄，但是不知道怎么用汇编传递常量orz
+//
     .section .text
     .global __riscv64_entry
 	.align 4
@@ -122,48 +123,46 @@ __riscv64_exit:
 	csrrw   a0, 0x140, a0
 
 	# /* Save Guest GPRs (except A0) */
-	# sd      ra, 256(a0)
-	# sd      sp, 264(a0)
-	# sd      gp, 272(a0)
-	# sd      tp, 280(a0)
-	# sd      t0, 288(a0)
-	# sd      t1, 296(a0)
-	# sd      t2, 304(a0)
-	# sd      s0, 312(a0)
-	# sd      s1, 320(a0)
-	# sd      a1, 336(a0)
-	# sd      a2, 344(a0)
-	# sd      a3, 352(a0)
-	# sd      a4, 360(a0)
-	# sd      a5, 368(a0)
-	# sd      a6, 376(a0)
-	# sd      a7, 384(a0)
-	# sd      s2, 392(a0)
-	# sd      s3, 400(a0)
-	# sd      s4, 408(a0)
-	# sd      s5, 416(a0)
-	# sd      s6, 424(a0)
-	# sd      s7, 432(a0)
-	# sd      s8, 440(a0)
-	# sd      s9, 448(a0)
-	# sd      s10, 456(a0)
-	# sd      s11, 464(a0)
-	# sd      t3, 472(a0)
-	# sd      t4, 480(a0)
-	# sd      t5, 488(a0)
-	# sd      t6, 496(a0)
+	sd      ra, 256(a0)
+	sd      sp, 264(a0)
+	sd      gp, 272(a0)
+	sd      tp, 280(a0)
+	sd      t0, 288(a0)
+	sd      t1, 296(a0)
+	sd      t2, 304(a0)
+	sd      s0, 312(a0)
+	sd      s1, 320(a0)
+	sd      a1, 336(a0)
+	sd      a2, 344(a0)
+	sd      a3, 352(a0)
+	sd      a4, 360(a0)
+	sd      a5, 368(a0)
+	sd      a6, 376(a0)
+	sd      a7, 384(a0)
+	sd      s2, 392(a0)
+	sd      s3, 400(a0)
+	sd      s4, 408(a0)
+	sd      s5, 416(a0)
+	sd      s6, 424(a0)
+	sd      s7, 432(a0)
+	sd      s8, 440(a0)
+	sd      s9, 448(a0)
+	sd      s10, 456(a0)
+	sd      s11, 464(a0)
+	sd      t3, 472(a0)
+	sd      t4, 480(a0)
+	sd      t5, 488(a0)
+	sd      t6, 496(a0)
 
 	# # /* Save Guest SEPC */
 	# # csrr	t0, CSR_SEPC
 	# # STORE	t0, (RVMSTORE_GUEST_SEPC)(a0)
-	# csrr    t0, 0x141
-	# sd      t0, 504(a0)
+	csrr    t0, 0x141
+	sd      t0, 504(a0)
 
-	# # /* Restore Host STVEC */
-	# # LOAD	t1, (RVMSTORE_HOST_STVEC)(a0)
-	# # csrw	CSR_STVEC, t1
-	# ld      t1, 232(a0)
-	# csrw    0x105, t1
+	# /* Restore Host STVEC */
+	ld      t1, 232(a0)
+	csrw    0x105, t1
 
 	# # /* Save Guest A0 and Restore Host SSCRATCH */
 	# # LOAD	t2, (RVMSTORE_HOST_SSCRATCH)(a0)
@@ -222,8 +221,8 @@ __riscv64_exit:
 
 	/* Return to C code */
 	ret	
-	#jalr	x0, 0(x1)
-	#x0 是zero， x1是ra（return address）
+	# jalr	x0, 0(x1)
+	# x0 是zero， x1是ra（return address）
 
 .global __test
 __test:

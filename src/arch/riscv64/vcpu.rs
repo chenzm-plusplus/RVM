@@ -193,6 +193,8 @@ impl Vcpu{
 
 		info!("[RVM] riscv64 exit");
 
+		unsafe{ test_switch();}
+
 		self.running.store(false, Ordering::SeqCst);
 
 		if has_err {
@@ -205,16 +207,6 @@ impl Vcpu{
 		}
 
 		// VM Exit
-		// match vmexit_handler(
-		// 	&mut vmcs,
-		// 	&mut self.vmx_state.guest_state,
-		// 	&mut self.interrupt_state,
-		// 	&self.guest.gpm,
-		// 	&self.guest.traps,
-		// )? {
-		// 	Some(packet) => return Ok(packet), // forward to user mode handler
-		// 	None => continue,
-		// }
 		return Err(RvmError::Success);
 
         // loop {
