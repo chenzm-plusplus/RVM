@@ -19,6 +19,7 @@ __riscv64_entry:
 	//a0是函数参数，我觉得调用参数的时候或许应该传入地址(??)
 	/* Save Host GPRs (except A0 and T0-T6) */
 	sd  ra, 8(a0)
+
     sd  sp, 16(a0)
     sd  gp, 24(a0)
     sd  tp, 32(a0)
@@ -29,7 +30,6 @@ __riscv64_entry:
     sd  a3, 80(a0)
     sd  a4, 88(a0)
     sd  a5, 96(a0)
-
     sd  a6, 104(a0)
     sd  a7, 112(a0)
     sd  s2, 120(a0)
@@ -69,44 +69,42 @@ __riscv64_entry:
 	csrw	0x105, t5
     sd  t4, 0xe8(a0)	#host stvec 232
 
-	#ATTENTION
-
-
 	/* Restore Guest SEPC */
 	ld	t0, 504(a0)
 	csrw	0x141, t0
 
 	/* Restore Guest GPRs (except A0) */
-    # ld  ra, 256(a0)
-    # ld  sp, 264(a0)
-    # ld  gp, 272(a0)
-    # ld  tp, 280(a0)
-    # ld  t0, 288(a0)
-    # ld  t1, 296(a0)
-    # ld  t2, 304(a0)
-    # ld  s0, 312(a0)
-    # ld  s1, 320(a0)
-    # ld  a1, 336(a0)
-    # ld  a2, 344(a0)
-    # ld  a3, 352(a0)
-    # ld  a4, 360(a0)
-    # ld  a5, 368(a0)
-    # ld  a6, 376(a0)
-    # ld  a7, 384(a0)
-    # ld  s2, 392(a0)
-    # ld  s3, 400(a0)
-    # ld  s4, 408(a0)
-    # ld  s5, 416(a0)
-    # ld  s6, 424(a0)
-    # ld  s7, 432(a0)
-    # ld  s8, 440(a0)
-    # ld  s9, 448(a0)
-    # ld  s10, 456(a0)
-    # ld  s11, 464(a0)
-    # ld  t3, 472(a0)
-    # ld  t4, 480(a0)
-    # ld  t5, 488(a0)
-    # ld  t6, 496(a0)
+	// 在初始情况下这些应该都是0
+    ld  ra, 256(a0)
+    ld  sp, 264(a0)
+    ld  gp, 272(a0)
+    ld  tp, 280(a0)
+    ld  t0, 288(a0)
+    ld  t1, 296(a0)
+    ld  t2, 304(a0)
+    ld  s0, 312(a0)
+    ld  s1, 320(a0)
+    ld  a1, 336(a0)
+    ld  a2, 344(a0)
+    ld  a3, 352(a0)
+    ld  a4, 360(a0)
+    ld  a5, 368(a0)
+    ld  a6, 376(a0)
+    ld  a7, 384(a0)
+    ld  s2, 392(a0)
+    ld  s3, 400(a0)
+    ld  s4, 408(a0)
+    ld  s5, 416(a0)
+    ld  s6, 424(a0)
+    ld  s7, 432(a0)
+    ld  s8, 440(a0)
+    ld  s9, 448(a0)
+    ld  s10, 456(a0)
+    ld  s11, 464(a0)
+    ld  t3, 472(a0)
+    ld  t4, 480(a0)
+    ld  t5, 488(a0)
+    ld  t6, 496(a0)
 
 	/* Restore Guest A0 */
 	ld  a0, 328(a0)
@@ -124,6 +122,7 @@ __riscv64_exit:
 
 	# /* Save Guest GPRs (except A0) */
 	sd      ra, 256(a0)
+
 	sd      sp, 264(a0)
 	sd      gp, 272(a0)
 	sd      tp, 280(a0)
@@ -219,7 +218,7 @@ __riscv64_exit:
 	ld      s10, 184(a0)
 	ld      s11, 192(a0)
 
-	/* Return to C code */
+	/* Return to Rust code */
 	ret	
 	# jalr	x0, 0(x1)
 	# x0 是zero， x1是ra（return address）

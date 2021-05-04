@@ -155,10 +155,10 @@ impl Vcpu{
 
         Ok(vcpu)
     }
+	
 	fn init(&mut self, entry: u64) -> RvmResult {
         Ok(())
     }
-    //todo : resume
 
 	pub fn resume(&mut self) -> RvmResult<RvmExitPacket> {
 		info!("vcpu::resume");
@@ -166,10 +166,9 @@ impl Vcpu{
 		// VM Entry
 		self.running.store(true, Ordering::SeqCst);
 		
-		// sstatus::
-		//测试一下！
 		self.rvmstate_riscv64.guest_state.sepc = test_switch as u64;
-		self.rvmstate_riscv64.guest_state.sstatus = 0x8000000000006100 as u64;
+		self.rvmstate_riscv64.guest_state.sstatus = 0x8000000000006100 as u64; 
+		//这里需要设置SEIP=1，表示在trap之前处于S态。否则在entry的最后一行执行sret就会跳到U态，权限就不对了QAQ
 
 		info!("[RVM] riscv64 entry");
 
@@ -188,12 +187,13 @@ impl Vcpu{
 		unsafe{trace!("[RVM] guest_sepc is {:#x}",*((&self.rvmstate_riscv64.host_state.zero as *const _ as u64 + 504) as *const u64));}
 		trace!("[RVM] test_switch is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
 
-		//todo: check ra value
 		let has_err = unsafe { __riscv64_entry(&mut self.rvmstate_riscv64) };
 
 		info!("[RVM] riscv64 exit");
 
-		unsafe{ test_switch();}
+		//todo：需要知道是否要在进入guestos之前把寄存器初始化为特定的值。
+		//通用寄存器似乎不用
+		//需要改哪些特权寄存器？
 
 		self.running.store(false, Ordering::SeqCst);
 
