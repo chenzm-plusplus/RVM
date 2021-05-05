@@ -7,8 +7,16 @@ use alloc::{
 	boxed::Box,
 };
 
-use riscv::register::sstatus::{
+use riscv::register::{
+	sstatus::{
 	Sstatus,SPP,self,
+	},
+	scause::{
+        self,
+        Trap,
+        Exception,
+        Interrupt,
+    },
 };
 
 use core::fmt;
@@ -20,6 +28,9 @@ use crate::{packet::RvmExitPacket, RvmError, RvmResult, VcpuIo, VcpuState};
 
 use super::regs::*;
 use super::test::*;
+use super::csr::*;
+
+use super::trap::trap_handler;
 
 //===================================================================================
 
@@ -179,7 +190,7 @@ pub struct RvmStateRiscv64 {
 #[no_mangle]
 unsafe extern "C" 
     fn test_switch(){
-        // info!("[RVM] switch entry success!");
+        info!("[RVM] switch entry success!");
 		__test_write_general_registers();
 		__test();
     }
@@ -200,35 +211,7 @@ impl Vcpu{
         Ok(vcpu)
     }
 
-	fn init(&mut self, entry: u64) -> RvmResult {
-        Ok(())
-    }
-
-	pub fn resume(&mut self) -> RvmResult<RvmExitPacket> {
-		info!("vcpu::resume");
-
-		// VM Entry
-		self.running.store(true, Ordering::SeqCst);
-		
-		self.rvmstate_riscv64.guest_state.sepc = test_switch as u64;
-		self.rvmstate_riscv64.guest_state.sstatus = 0x8000_0000_0000_6100 as u64; 
-		//这里需要设置SEIP=1，表示在trap之前处于S态。否则在entry的最后一行执行sret就会跳到U态，权限就不对了QAQ
-
-		//需要设置hstatus
-		//SPV = 1 : 表示在h态之前V=1，因此执行sret可以进入这个态
-		//SPVP = 1 : V=1时这一位有效，表示S（1）U（0）
-		self.rvmstate_riscv64.guest_state.hstatus = 0x0000_0000_0000_00c0 as u64;
-
-		debug!("[RVM] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
-		debug!("[RVM] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
-
-		// self.rvmstate_riscv64.guest_state.scounteren = 0x1 as u64;
-
-		//todo:检查guest的通用寄存器是否保存正确
-
-		info!("[RVM] riscv64 entry");
-
-		//trace
+	fn tracer(&self){
 		let rvmstate_riscv64_address = &self.rvmstate_riscv64.host_state.zero as *const _ as u64;
 		trace!("[RVM] a0 is {:#x}",&self.rvmstate_riscv64.host_state.a0 as *const _ as u64);
 		trace!("[RVM] guest_sepc address is {:#x}",&self.rvmstate_riscv64.host_state.zero as *const _ as u64 + 504);
@@ -246,66 +229,82 @@ impl Vcpu{
 		// info!("[RVM] host_sstatus is {:#x}",sstatus::read());
 		unsafe{trace!("[RVM] guest_sepc is {:#x}",*((&self.rvmstate_riscv64.host_state.zero as *const _ as u64 + 504) as *const u64));}
 		trace!("[RVM] test_switch is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
+	}
 
-		let has_err = unsafe { __riscv64_entry(&mut self.rvmstate_riscv64) };
+	fn init(&mut self, entry: u64) -> RvmResult {
+		unsafe{ csrw!(hedeleg,1<<8);}
+		self.rvmstate_riscv64.guest_state.sepc = 0x0000_0000_9000_0000 as u64;
+		self.rvmstate_riscv64.guest_state.sstatus = 0x8000_0000_0000_6100 as u64; 
+					//需要设置hstatus
+			//SPV = 1 : 表示在h态之前V=1，因此执行sret可以进入这个态
+			//SPVP = 1 : V=1时这一位有效，表示S（1）U（0）
+			self.rvmstate_riscv64.guest_state.hstatus = 0x0000_0000_0020_00c0 as u64;
+        Ok(())
+    }
 
-		info!("[RVM] riscv64 exit");
+	pub fn resume(&mut self) -> RvmResult<RvmExitPacket> {
+		loop{
+			info!("vcpu::resume");
 
-		debug!("[RVM] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
-		debug!("[RVM] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
+			// VM Entry
+			self.running.store(true, Ordering::SeqCst);
+			
+			// self.rvmstate_riscv64.guest_state.sepc = test_switch as u64;
 
-		//需要知道是否要在进入guestos之前把寄存器初始化为特定的值。
-		//通用寄存器似乎不用
-		//需要改哪些特权寄存器？
+			// let add = 0x90000000 as u64;
+			// unsafe{
+			// 	let re = *(add as * const u64);
+			// 	info!("[RVM] re {:#x}",re);
+			// }
 
-		self.running.store(false, Ordering::SeqCst);
+			//这里需要设置SEIP=1，表示在trap之前处于S态。否则在entry的最后一行执行sret就会跳到U态，权限就不对了QAQ
 
-		if has_err {
-			warn!(
-				// "[RVM] VCPU resume failed: {:?}",
-				// VmInstructionError::from(vmcs.read32(VM_INSTRUCTION_ERROR))
-				"[RVM] VCPU resume failed"
-			);
-			return Err(RvmError::Internal);
+			trace!("[RVM] [entry] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
+			debug!("[RVM] [entry] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
+
+			// self.rvmstate_riscv64.guest_state.scounteren = 0x1 as u64;
+
+			//todo:检查guest的通用寄存器是否保存正确
+
+			info!("[RVM] riscv64 entry");
+
+			self.tracer();
+
+			let has_err = unsafe { __riscv64_entry(&mut self.rvmstate_riscv64) };
+
+			info!("[RVM] riscv64 exit");
+
+			let s = scause::read();
+			
+			info!("[RVM] scause is {:#x}",s.bits() as u64);
+
+			trace!("[RVM] [exit] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
+			debug!("[RVM] [exit] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
+
+
+			//需要知道是否要在进入guestos之前把寄存器初始化为特定的值。
+			//通用寄存器似乎不用改
+
+			self.running.store(false, Ordering::SeqCst);
+
+			//todo：处理中断
+
+			trap_handler(&mut self.rvmstate_riscv64.guest_state);
+
+			info!("[RVM] after trap_handler...guest sepc is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
+
+			// if has_err {
+			// 	warn!(
+			// 		// "[RVM] VCPU resume failed: {:?}",
+			// 		// VmInstructionError::from(vmcs.read32(VM_INSTRUCTION_ERROR))
+			// 		"[RVM] VCPU resume failed"
+			// 	);
+			// 	return Err(RvmError::Internal);
+			// }
+
+			// VM Exit
 		}
-
-		// VM Exit
 		return Err(RvmError::Success);
-
-        // loop {
-        //     let mut vmcs = AutoVmcs::new(self.vmcs_page.phys_addr())?;
-
-        //     self.interrupt_state.try_inject_interrupt(&mut vmcs)?;
-        //     // TODO: save/restore guest extended registers (x87/SSE)
-
-        //     // VM Entry
-        //     self.running.store(true, Ordering::SeqCst);
-        //     trace!("[RVM] vmx entry");
-        //     let has_err = unsafe { vmx_entry(&mut self.vmx_state) };
-        //     trace!("[RVM] vmx exit");
-        //     self.running.store(false, Ordering::SeqCst);
-
-        //     if has_err {
-        //         warn!(
-        //             "[RVM] VCPU resume failed: {:?}",
-        //             VmInstructionError::from(vmcs.read32(VM_INSTRUCTION_ERROR))
-        //         );
-        //         return Err(RvmError::Internal);
-        //     }
-
-        //     // VM Exit
-        //     self.vmx_state.resume = true;
-        //     match vmexit_handler(
-        //         &mut vmcs,
-        //         &mut self.vmx_state.guest_state,
-        //         &mut self.interrupt_state,
-        //         &self.guest.gpm,
-        //         &self.guest.traps,
-        //     )? {
-        //         Some(packet) => return Ok(packet), // forward to user mode handler
-        //         None => continue,
-        //     }
-        // }
     }
 }
 

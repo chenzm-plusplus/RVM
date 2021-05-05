@@ -33,3 +33,15 @@ __test_write_general_registers:
 	li      s9, 176
 	li      s10, 184
 	li      s11, 192
+
+.global __show_hstatus
+.align 4
+__show_hstatus:
+    csrr t6,0x600
+    mv  a0,t6
+
+# .global __read_
+# .align 4
+# __show_hstatus:
+#     csrr t6,0x80300000
+#     mv  a0,t6

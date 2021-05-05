@@ -1,15 +1,21 @@
 #![allow(clippy::unnecessary_wraps)]
 
+
+#[macro_use]
+mod instructions;
+
 mod bits;
 mod csr;
 mod ept;
 mod guest;
 mod vcpu;
 mod config;
-#[macro_use]
-mod instructions;
+
 mod regs;
 mod test;
+mod rvmcall;
+mod trap;
+mod sbi;
 
 use regs::*;
 pub use instructions::*;
