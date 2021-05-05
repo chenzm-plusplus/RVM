@@ -232,13 +232,33 @@ impl Vcpu{
 	}
 
 	fn init(&mut self, entry: u64) -> RvmResult {
-		unsafe{ csrw!(hedeleg,1<<8);}
+		//8:userexception委托给VS
+		//2:illegal instruction
+
+		// hedeleg = 0;
+		// hedeleg |= (1UL << EXC_INST_MISALIGNED);
+		// hedeleg |= (1UL << EXC_BREAKPOINT);
+		// hedeleg |= (1UL << EXC_SYSCALL);
+		// hedeleg |= (1UL << EXC_INST_PAGE_FAULT);
+		// hedeleg |= (1UL << EXC_LOAD_PAGE_FAULT);
+		// hedeleg |= (1UL << EXC_STORE_PAGE_FAULT);
+
+		// hideleg = 0;
+		// hideleg |= (1UL << IRQ_VS_SOFT);
+		// hideleg |= (1UL << IRQ_VS_TIMER);
+		// hideleg |= (1UL << IRQ_VS_EXT);
+
+		let hedeleg_value = 0x1ff | 1<<12|1<<13|1<<15 ;//  0xffff_ffff;//a1<<8 | 1<<2 | 1<<7;
+		debug!("[RVM] hedeleg_value {:#x}",hedeleg_value);
+		unsafe{ csrw!(hedeleg, hedeleg_value);}
 		self.rvmstate_riscv64.guest_state.sepc = 0x0000_0000_9000_0000 as u64;
 		self.rvmstate_riscv64.guest_state.sstatus = 0x8000_0000_0000_6100 as u64; 
 					//需要设置hstatus
 			//SPV = 1 : 表示在h态之前V=1，因此执行sret可以进入这个态
 			//SPVP = 1 : V=1时这一位有效，表示S（1）U（0）
-			self.rvmstate_riscv64.guest_state.hstatus = 0x0000_0000_0020_00c0 as u64;
+		// self.rvmstate_riscv64.guest_state.hstatus = 0x0000_0000_0020_00c0 as u64;
+		self.rvmstate_riscv64.guest_state.hstatus = (1 << 7) | (1<<8) | (0<<21) as u64;
+		self.rvmstate_riscv64.guest_state.hstatus |= (1 << 22) as u64;
         Ok(())
     }
 

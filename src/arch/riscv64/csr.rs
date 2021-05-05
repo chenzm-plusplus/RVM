@@ -15,6 +15,7 @@ pub const fcsr: u64 = 0x003;
 pub const cycle: u64 = 0xc00;
 pub const time: u64 = 0xc01;
 pub const instret: u64 = 0xc02;
+pub const vsstatus: u64 = 0x200;
 pub const hpmcounter3: u64 = 0xc03;
 pub const hpmcounter4: u64 = 0xc04;
 pub const hpmcounter5: u64 = 0xc05;

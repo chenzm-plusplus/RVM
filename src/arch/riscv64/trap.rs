@@ -47,7 +47,8 @@ pub fn trap_handler(guest_state: &mut GuestState){
             // kernel_println!("[kernel] Upsupported trap of app {},core dumped.", get_task_current());
             // exit_current_and_run_next();
             debug!("[RVM] trap_handler...guest_state {:#x?}",guest_state);
-            panic!("Unsupported trap {:?}, stval = {:#x}, guest_state.sepc = {:#x} !", scause.cause(), stval, guest_state.sepc);
+            panic!("[RVM] Unsupported trap {:?}, stval = {:#x}, guest_state.sepc = {:#x} !", 
+                scause.bits(), stval, guest_state.sepc);
         }
     }
 }
