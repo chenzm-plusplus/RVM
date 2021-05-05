@@ -287,7 +287,9 @@ impl Vcpu{
 
 			self.running.store(false, Ordering::SeqCst);
 
-			//todo：处理中断
+			if self.rvmstate_riscv64.guest_state.a7 == 8 {
+				return Err(RvmError::Success);
+			}
 
 			trap_handler(&mut self.rvmstate_riscv64.guest_state);
 

@@ -35,7 +35,7 @@ pub fn trap_handler(guest_state: &mut GuestState){
             // get system call return value
             // let result = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]);
             // let result = syscall5(cx.x[17], [cx.x[10], cx.x[11], cx.x[12], cx.x[13], cx.x[14]]);
-            let result = sbi_call(guest_state.a7, guest_state.a0,
+            let result = rvm_call(guest_state.a7, guest_state.a0,
                 guest_state.a1,guest_state.a2);
             // cx is changed during sys_exec, so we have to call it again
             // cx = guest_state;
