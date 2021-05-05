@@ -166,6 +166,7 @@ fn handle_external_interrupt(vmcs: &AutoVmcs, interrupt_state: &mut InterruptSta
     debug_assert!(info.valid);
     debug_assert!(info.interruption_type == 0);
 
+    //to 
     unsafe { manual_trap(info.vector, interrupt_state) };
 
     use super::consts::{COM1, IRQ0};

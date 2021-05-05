@@ -224,8 +224,8 @@ impl Vcpu{
 		trace!("[RVM] host_stvec address is {:#x}",host_stvec_address);
 		trace!("[RVM] guest_sstatus address is {:#x}",guest_sstatus_address);
 		trace!("[RVM] host_stvec offset is {}, {:#x}",host_stvec_address-rvmstate_riscv64_address,host_stvec_address-rvmstate_riscv64_address);
-		info!("[RVM] host_scounteren offset is {}, {:#x}",host_scounteren_address-rvmstate_riscv64_address,host_scounteren_address-rvmstate_riscv64_address);
-		info!("[RVM] guest_scounteren offset is {}, {:#x}",guest_scounteren_address-rvmstate_riscv64_address,guest_scounteren_address-rvmstate_riscv64_address);
+		trace!("[RVM] host_scounteren offset is {}, {:#x}",host_scounteren_address-rvmstate_riscv64_address,host_scounteren_address-rvmstate_riscv64_address);
+		trace!("[RVM] guest_scounteren offset is {}, {:#x}",guest_scounteren_address-rvmstate_riscv64_address,guest_scounteren_address-rvmstate_riscv64_address);
 		// info!("[RVM] host_sstatus is {:#x}",sstatus::read());
 		unsafe{trace!("[RVM] guest_sepc is {:#x}",*((&self.rvmstate_riscv64.host_state.zero as *const _ as u64 + 504) as *const u64));}
 		trace!("[RVM] test_switch is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
