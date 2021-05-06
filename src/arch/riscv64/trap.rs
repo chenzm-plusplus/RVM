@@ -25,12 +25,12 @@ pub fn trap_handler(guest_state: &mut GuestState){
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
-        Trap::Exception(Exception::VirtHyperEnvCall) => {
+        Trap::Exception(Exception::VirtualSupervisorEnvCall) => {
             // jump to next instruction anyway
             // let mut cx = guest_state;
             // cx.sepc += 4;
             guest_state.sepc += 4;
-            debug!("[RVM] trap_handler: cx.sepc {:#x}",guest_state.sepc);
+            debug!("[RVM] trap: {:?}, guest_state.sepc {:#x}",scause.bits(),guest_state.sepc);
 
             // get system call return value
             // let result = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]);
@@ -40,7 +40,28 @@ pub fn trap_handler(guest_state: &mut GuestState){
             // cx is changed during sys_exec, so we have to call it again
             // cx = guest_state;
             guest_state.a0 = result as u64;
-            
+        }
+        Trap::Exception(Exception::IllegalInstruction) |
+        Trap::Exception(Exception::StoreFault)
+        =>{
+            info!("[RVM] trap: {:?}, guest_state.sepc {:#x}",scause.bits(),guest_state.sepc);
+            //csrrw又回触发illegalinstruction，好像sret让vs返回了u态？
+            unsafe{
+                let pc : u64 = csrr!(vstvec); 
+                let vst : u64 = csrr!(vsstatus);
+                //只修改pc不够
+                //8: SPP
+                csrw!(vsstatus, (vst | (1 << 8) )& !(1 <<5));
+                let hst : u64 = csrr!(hstatus);
+                let sst : u64 = csrr!(sstatus);
+                info!("[RVM] pc is {:#x}, vst i {:#b}",pc,vst);
+                info!("[RVM] hst is {:#x}, sst i {:#x}",hst,sst);
+                info!("[RVM] guest_hst is {:#b}, guest_sst i {:#b}",guest_state.hstatus,guest_state.sstatus);
+                guest_state.sepc = pc; 
+                guest_state.sstatus |= 1<<8; 
+                csrw!(vscause, scause.bits() as u64);
+            }
+            // panic!("[RVM] trap: {:?}, guest_state.sepc {:#x}",scause.bits(),guest_state.sepc);
         }
         _ => {
             // exit_current_and_run_next(-10);
