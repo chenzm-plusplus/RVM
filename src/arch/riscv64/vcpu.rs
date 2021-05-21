@@ -30,7 +30,11 @@ use super::regs::*;
 use super::test::*;
 use super::csr::*;
 
-use super::trap::trap_handler;
+use super::trap::{
+	trap_handler,
+	enable_timer_interrupt,
+	unable_timer_interrupt,
+};
 
 //===================================================================================
 
@@ -249,22 +253,40 @@ impl Vcpu{
 		// hideleg |= (1UL << IRQ_VS_EXT);
 
 		let hedeleg_value = 0x1ff | 1<<12|1<<13|1<<15 ;//  0xffff_ffff;//a1<<8 | 1<<2 | 1<<7;
-		debug!("[RVM] hedeleg_value {:#x}",hedeleg_value);
+		info!("[RVM] hedeleg_value {:#x}",hedeleg_value);
 		unsafe{ csrw!(hedeleg, hedeleg_value);}
+
+		let hideleg_value = 0 | 1<<10 | 1<<6 | 1<<2;//soft,timer,ext
+		info!("[RVM] hideleg_value {:#x}",hideleg_value);
+		unsafe{ csrw!(hideleg, hideleg_value);}
+
+		unsafe{ 
+			let sie_value : u64 = csrr!(sie); 
+			info!("[RVM] sie_value {:#x}",sie_value);
+			let hie_value : u64 = csrr!(hie); 
+			info!("[RVM] hie_value {:#x}",hie_value);
+			let sip_value : u64 = csrr!(sip); 
+			info!("[RVM] sip_value {:#x}",sip_value);
+			let hip_value : u64 = csrr!(hip); 
+			info!("[RVM] hip_value {:#x}",hip_value);
+		}
+		
 		self.rvmstate_riscv64.guest_state.sepc = 0x0000_0000_9000_0000 as u64;
 		self.rvmstate_riscv64.guest_state.sstatus = 0x8000_0000_0000_6100 as u64; 
-					//需要设置hstatus
+			//需要设置hstatus
 			//SPV = 1 : 表示在h态之前V=1，因此执行sret可以进入这个态
 			//SPVP = 1 : V=1时这一位有效，表示S（1）U（0）
 		// self.rvmstate_riscv64.guest_state.hstatus = 0x0000_0000_0020_00c0 as u64;
 		self.rvmstate_riscv64.guest_state.hstatus = (1 << 7) | (1<<8) | (0<<21) as u64;
 		self.rvmstate_riscv64.guest_state.hstatus |= (1 << 22) as u64;
+
+
         Ok(())
     }
 
 	pub fn resume(&mut self) -> RvmResult<RvmExitPacket> {
 		loop{
-			info!("vcpu::resume");
+			debug!("vcpu::resume");
 
 			// VM Entry
 			self.running.store(true, Ordering::SeqCst);
@@ -280,7 +302,7 @@ impl Vcpu{
 			//这里需要设置SEIP=1，表示在trap之前处于S态。否则在entry的最后一行执行sret就会跳到U态，权限就不对了QAQ
 
 			trace!("[RVM] [entry] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
-			debug!("[RVM] [entry] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
+			trace!("[RVM] [entry] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
 
 			// self.rvmstate_riscv64.guest_state.scounteren = 0x1 as u64;
 
@@ -290,17 +312,46 @@ impl Vcpu{
 
 			self.tracer();
 
+			enable_timer_interrupt();
+
+			unsafe{ 
+				let sie_value : u64 = csrr!(sie); 
+				info!("[RVM] sie_value {:#x}",sie_value);
+				let hie_value : u64 = csrr!(hie); 
+				info!("[RVM] hie_value {:#x}",hie_value);
+				let sip_value : u64 = csrr!(sip); 
+				info!("[RVM] sip_value {:#x}",sip_value);
+				let hip_value : u64 = csrr!(hip); 
+				info!("[RVM] hip_value {:#x}",hip_value);
+				let hvip_value: u64 = csrr!(hvip);
+				info!("[RVM] hvip_value {:#x}",hvip_value);
+			}
+
 			let has_err = unsafe { __riscv64_entry(&mut self.rvmstate_riscv64) };
+
+			unable_timer_interrupt();
 
 			info!("[RVM] riscv64 exit");
 
+			unsafe{ 
+				let sie_value : u64 = csrr!(sie); 
+				info!("[RVM] sie_value {:#x}",sie_value);
+				let hie_value : u64 = csrr!(hie); 
+				info!("[RVM] hie_value {:#x}",hie_value);
+				let sip_value : u64 = csrr!(sip); 
+				info!("[RVM] sip_value {:#x}",sip_value);
+				let hip_value : u64 = csrr!(hip); 
+				info!("[RVM] hip_value {:#x}",hip_value);
+				let hvip_value: u64 = csrr!(hvip);
+				info!("[RVM] hvip_value {:#x}",hvip_value);
+			}
+
 			let s = scause::read();
 			
-			info!("[RVM] scause is {:#x}",s.bits() as u64);
+			trace!("[RVM] scause is {:#x}",s.bits() as u64);
 
 			trace!("[RVM] [exit] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
-			debug!("[RVM] [exit] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
-
+			trace!("[RVM] [exit] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
 
 			//需要知道是否要在进入guestos之前把寄存器初始化为特定的值。
 			//通用寄存器似乎不用改
@@ -313,7 +364,7 @@ impl Vcpu{
 
 			trap_handler(&mut self.rvmstate_riscv64.guest_state);
 
-			info!("[RVM] after trap_handler...guest sepc is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
+			trace!("[RVM] after trap_handler...guest sepc is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
 
 			// if has_err {
 			// 	warn!(

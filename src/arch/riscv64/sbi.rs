@@ -13,7 +13,7 @@ const SBI_SHUTDOWN: u64 = 8;
 #[inline(always)]
 pub fn sbi_call(which: u64, arg0: u64, arg1: u64, arg2: u64) -> u64 {
     let mut ret;
-    warn!("[RVM] sbi_call, {:#x}, {:#x}, {:#x}, {:#x}",which, arg0, arg1, arg2);
+    //warn!("[RVM] sbi_call, {:#x}, {:#x}, {:#x}, {:#x}",which, arg0, arg1, arg2);
     unsafe {
         llvm_asm!("ecall"
             : "={x10}" (ret)
