@@ -12,7 +12,6 @@ mod vcpu;
 mod config;
 
 mod regs;
-mod test;
 mod rvmcall;
 mod trap;
 mod sbi;
@@ -30,7 +29,7 @@ use riscv::register::{
 
 //判断是否在硬件上支持Hypervisor
 pub fn check_hypervisor_feature() -> bool {
-    //访问misa寄存器
+    // 需要访问misa寄存器
     // 这段代码暂时注释掉，因为misa寄存器只有在M态才能访问。
     // 现在真的只能假装它一定好用
     // info!("rvm info test");
