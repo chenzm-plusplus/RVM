@@ -18,6 +18,7 @@ pub const instret: u64 = 0xc02;
 pub const vsstatus: u64 = 0x200;
 pub const vsie: u64 = 0x204;
 pub const vstvec: u64 = 0x205;
+pub const vsepc: u64 = 0x241;
 pub const vscause: u64 = 0x242;
 pub const hpmcounter3: u64 = 0xc03;
 pub const hpmcounter4: u64 = 0xc04;

@@ -235,19 +235,6 @@ impl Vcpu{
 		//8:userexception委托给VS
 		//2:illegal instruction
 
-		// hedeleg = 0;
-		// hedeleg |= (1UL << EXC_INST_MISALIGNED);
-		// hedeleg |= (1UL << EXC_BREAKPOINT);
-		// hedeleg |= (1UL << EXC_SYSCALL);
-		// hedeleg |= (1UL << EXC_INST_PAGE_FAULT);
-		// hedeleg |= (1UL << EXC_LOAD_PAGE_FAULT);
-		// hedeleg |= (1UL << EXC_STORE_PAGE_FAULT);
-
-		// hideleg = 0;
-		// hideleg |= (1UL << IRQ_VS_SOFT);
-		// hideleg |= (1UL << IRQ_VS_TIMER);
-		// hideleg |= (1UL << IRQ_VS_EXT);
-
 		let hedeleg_value = 0x1ff | 1<<12|1<<13|1<<15 ;//  0xffff_ffff;//a1<<8 | 1<<2 | 1<<7;
 		debug!("[RVM] hedeleg_value {:#x}",hedeleg_value);
 		unsafe{ csrw!(hedeleg, hedeleg_value);}
@@ -256,9 +243,8 @@ impl Vcpu{
 					//需要设置hstatus
 			//SPV = 1 : 表示在h态之前V=1，因此执行sret可以进入这个态
 			//SPVP = 1 : V=1时这一位有效，表示S（1）U（0）
-		// self.rvmstate_riscv64.guest_state.hstatus = 0x0000_0000_0020_00c0 as u64;
 		self.rvmstate_riscv64.guest_state.hstatus = (1 << 7) | (1<<8) | (0<<21) as u64;
-		self.rvmstate_riscv64.guest_state.hstatus |= (1 << 22) as u64;
+		self.rvmstate_riscv64.guest_state.hstatus |= (0 << 22) as u64;
         Ok(())
     }
 
@@ -271,20 +257,10 @@ impl Vcpu{
 			
 			// self.rvmstate_riscv64.guest_state.sepc = test_switch as u64;
 
-			// let add = 0x90000000 as u64;
-			// unsafe{
-			// 	let re = *(add as * const u64);
-			// 	info!("[RVM] re {:#x}",re);
-			// }
-
 			//这里需要设置SEIP=1，表示在trap之前处于S态。否则在entry的最后一行执行sret就会跳到U态，权限就不对了QAQ
 
 			trace!("[RVM] [entry] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
 			debug!("[RVM] [entry] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
-
-			// self.rvmstate_riscv64.guest_state.scounteren = 0x1 as u64;
-
-			//todo:检查guest的通用寄存器是否保存正确
 
 			info!("[RVM] riscv64 entry");
 
@@ -301,10 +277,6 @@ impl Vcpu{
 			trace!("[RVM] [exit] check host state...{:#x?}",self.rvmstate_riscv64.host_state);
 			debug!("[RVM] [exit] check guest state...{:#x?}",self.rvmstate_riscv64.guest_state);
 
-
-			//需要知道是否要在进入guestos之前把寄存器初始化为特定的值。
-			//通用寄存器似乎不用改
-
 			self.running.store(false, Ordering::SeqCst);
 
 			if self.rvmstate_riscv64.guest_state.a7 == 8 {
@@ -315,16 +287,6 @@ impl Vcpu{
 
 			info!("[RVM] after trap_handler...guest sepc is {:#x}",self.rvmstate_riscv64.guest_state.sepc);
 
-			// if has_err {
-			// 	warn!(
-			// 		// "[RVM] VCPU resume failed: {:?}",
-			// 		// VmInstructionError::from(vmcs.read32(VM_INSTRUCTION_ERROR))
-			// 		"[RVM] VCPU resume failed"
-			// 	);
-			// 	return Err(RvmError::Internal);
-			// }
-
-			// VM Exit
 		}
 		return Err(RvmError::Success);
     }
