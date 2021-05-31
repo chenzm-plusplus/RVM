@@ -6,6 +6,8 @@ An experimental hypervisor library written in Rust to build both type-1 and type
 
 Supported architecture: x86_64 (Intel VMX).
 
+Supporting architecture: risc-v (supporting).
+
 ## Basic usage
 
 See the [UEFI example](examples/uefi/src/main.rs) for more details.

@@ -14,11 +14,7 @@
 
 ### RISC-V
 
-RISC-V是一种典型的精简（Reduced Instruction Set Computer，简写为RISC）指令集（Instruction Set Architecture，简写为ISA），仅有
-
-load 和 store 指令可以访问内存。（todo再多讲一些）
-
-RISC-V（读做“risk-five”）是一种典型的精简（Reduced Instruction Set Computer，简写为RISC）指令集（Instruction Set Architecture，简写为ISA），它是加利福尼亚大学伯克利分校的David Patterson教授与Krste Asanovic教授研究团队于2010年提出的一个开放指令集架构。名称中的“V”指的是该ISA的第五个版本，有时“V”也被解读为向量（Vector）扩展。与之前的诸多商用指令集（如x86、ARM，以及MIPS等）不同的是，RISC-V是一个开放指令集，它的提出受到了全球工业界和学术界的广泛关注。在我国，RISC-V的发展、研究和应用同样得到了广泛关注，在网信办、工信部、中科院等多个国家部委支持和指导下，中国开放指令生态（RISC-V）联盟于2018年11月8日浙江乌镇举行的第五届互联网大会上正式宣布成立。
+RISC-V是一种典型的精简（Reduced Instruction Set Computer，简写为RISC）指令集（Instruction Set Architecture，简写为ISA），仅有load 和 store 指令可以访问内存。与之前的诸多商用指令集（如x86、ARM，以及MIPS等）不同的是，RISC-V是一个开放指令集，它的提出受到了全球工业界和学术界的广泛关注。
 
 ### RISC-V-Hypervisor-Extension
 
@@ -48,9 +44,11 @@ RISC-V的虚拟化机制，在硬件上实现为：
 
 预期成果是能够为RISC-V架构的操作系统增加虚拟化层，支持RISC-V架构的Linux作为虚拟机运行。具体来说，本项目使用rCore-Tutorial-v3完成所有实验后的OS作为Host。虚拟化层主要参考RVM on x86（详见文档结尾：实现参考），将RVM移植到RISC-V上。
 
-HostOS代码将放在本仓库main分支下。
+HostOS代码将放在HostOS仓库的main分支下。
+（仓库链接：https://gitlab.eduxiji.net/18603560353/project0-rvm-tutorial-hostos.git）
 
-虚拟化层将作为一个crate放在仓库：（todo增加仓库链接）下。
+虚拟化层将作为一个crate放在本仓库下。
+（仓库链接：https://gitlab.eduxiji.net/18603560353/project325618-89192.git ）
 
 ### 目标二：将RVM on RISC-V进行裁剪，作为操作系统教学实验
 
@@ -68,7 +66,7 @@ HostOS代码将放在本仓库main分支下。
 
 - 测试用例及测试流程
 
-测试用例仓库地址为：（todo增加测试用例仓库）
+测试用例仓库地址为：https://gitlab.eduxiji.net/18603560353/project0-rvm-tutorial-test.git
 
 将在以上仓库中给出每次实验的测试用例及测试脚本。
 
@@ -86,7 +84,8 @@ HostOS代码将放在本仓库main分支下。
 - 能在HostOS中处理GuestOS发出的异常请求
 - 实现HostOS对GuestOS的异常委托
 
-目前能够运行具有简单功能的操作系统，详细说明见演示视频：（todo录制视频并上传）。
+目前能够运行具有简单功能的操作系统，运行方式见 [run.md](./run.md)
+演示视频：https://cloud.tsinghua.edu.cn/f/0d35c6abf94d4bed8034/。本段视频运行了能够运行用户态程序并进行进程调度的GuestOS。
 
 ### 目标二：将RVM on RISC-V进行裁剪，作为操作系统教学实验
 
@@ -112,11 +111,11 @@ HostOS为GuestOS注入时钟中断，GuestOS就可以根据时钟中断进行进
 
 - 内存隔离
 
-todo需要贾爷
+为GuestOS的物理地址到实际物理地址再增加一层地址转换，实现此特性后可以运行带页表的GuestOS。
 
 - IO
 
-todo需要贾爷
+支持GuestOS访问IO设备，HostOS实现此特性后可以运行带文件系统的GuestOS。
 
 ### 目标二：将RVM on RISC-V进行裁剪，作为操作系统教学实验
 
