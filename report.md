@@ -85,7 +85,7 @@ HostOS代码将放在HostOS仓库的main分支下。
 - 实现HostOS对GuestOS的异常委托
 
 目前能够运行具有简单功能的操作系统，运行方式见 [run.md](./run.md)
-演示视频：https://cloud.tsinghua.edu.cn/f/0d35c6abf94d4bed8034/。本段视频运行了能够运行用户态程序并进行进程调度的GuestOS。
+演示视频：https://cloud.tsinghua.edu.cn/d/e5fcadf763ab4bea9564/ 。本段视频运行了能够运行用户态程序并进行进程调度的GuestOS。
 
 ### 目标二：将RVM on RISC-V进行裁剪，作为操作系统教学实验
 
@@ -111,11 +111,11 @@ HostOS为GuestOS注入时钟中断，GuestOS就可以根据时钟中断进行进
 
 - 内存隔离
 
-为GuestOS的物理地址到实际物理地址再增加一层地址转换，实现此特性后可以运行带页表的GuestOS。
+为GuestOS的物理地址到实际物理地址再增加一层地址转换，实现此特性后可以实现GuestOS与HostOS的内存隔离。
 
 - IO
 
-支持GuestOS访问IO设备，HostOS实现此特性后可以运行带文件系统的GuestOS。
+支持GuestOS访问IO设备，HostOS实现此特性后可以实现磁盘等设备的模拟。
 
 ### 目标二：将RVM on RISC-V进行裁剪，作为操作系统教学实验
 
