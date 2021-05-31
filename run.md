@@ -11,6 +11,7 @@ cd ..
 git clone https://gitlab.eduxiji.net/18603560353/project0-rvm-tutorial-guestos.git GuestOS
 cd ..
 cd HostOS
+cd os
 make run
 ```
 以上测试流程将会在虚拟化层中启动一个GuestOS，GuestOS会运行一些触发异常的用户态进程。输出以下结果代表运行成功：
