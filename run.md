@@ -4,14 +4,16 @@
 ```shell
 mkdir working_dir
 cd working_dir
-git clone https://gitlab.eduxiji.net/18603560353/project325618-89192.git
-cd ..
+git clone https://gitlab.eduxiji.net/18603560353/project325618-89192.git RVM
 git clone https://gitlab.eduxiji.net/18603560353/project0-rvm-tutorial-hostos.git HostOS
-cd ..
 git clone https://gitlab.eduxiji.net/18603560353/project0-rvm-tutorial-guestos.git GuestOS
+git clone https://gitlab.eduxiji.net/18603560353/project0-rvm-tutorial-riscv.git riscv
 cd GuestOS
 git fetch origin
-git checkout ch2-rvm origin/ch2-rvm
+git checkout -b ch2-rvm origin/ch2-rvm
+cd os
+make build
+cd ..
 cd ..
 cd HostOS
 cd os
