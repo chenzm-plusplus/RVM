@@ -9,6 +9,9 @@ cd ..
 git clone https://gitlab.eduxiji.net/18603560353/project0-rvm-tutorial-hostos.git HostOS
 cd ..
 git clone https://gitlab.eduxiji.net/18603560353/project0-rvm-tutorial-guestos.git GuestOS
+cd GuestOS
+git fetch origin
+git checkout ch2-rvm origin/ch2-rvm
 cd ..
 cd HostOS
 cd os
