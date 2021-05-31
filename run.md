@@ -12,7 +12,7 @@ cd GuestOS
 git fetch origin
 git checkout -b ch2-rvm origin/ch2-rvm
 cd os
-make build
+make build LOG=info
 cd ..
 cd ..
 cd HostOS
